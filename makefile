@@ -40,6 +40,7 @@ all: build/monotide.exe
 build: ; $(call MKDIR,build)
 
 build/monotide.exe: build/lib_window.o
+build/monotide.exe: build/lib_font.o
 build/monotide.exe: build/main.o
 build/monotide.exe: ; $(CXX) $^ -o $@ $(CXXFLAGS)
 

@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include "lib_window.h"
+#include "lib_font.h"
 
 using namespace lib;
 
@@ -10,9 +11,12 @@ int WINAPI WinMain(HINSTANCE i, HINSTANCE, LPSTR, int)
 {
 	char const * const class_name = "MAINFRAME";
 
+	font::list_fonts(GetDC(nullptr));
+	return 0;
+
 	window::create_class(class_name, MainFrameProc, i);
 	HWND frame = window::create_frame(class_name, i);
-	SetWindowText(frame, "anika-redux");
+	SetWindowText(frame, "monotide-redux");
 	window::set_size(frame, 1040, 800);
 	window::center_to_parent(frame);
 	UpdateWindow(frame);
