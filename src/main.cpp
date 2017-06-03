@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <stdio.h>
+#include <vector>
 #include "lib_window.h"
 #include "lib_font.h"
 
@@ -11,7 +12,29 @@ int WINAPI WinMain(HINSTANCE i, HINSTANCE, LPSTR, int)
 {
 	char const * const class_name = "MAINFRAME";
 
-	font::list_fonts(GetDC(nullptr));
+	std::vector<font::EnumFontInfo> ff;
+	// font::list_fonts(ff, ANSI_CHARSET, true);
+	font::list_fonts(ff, DEFAULT_CHARSET);
+
+	printf("\n%d fonts found\n", ff.size());
+
+	for(size_t i=0; i<ff.size(); ++i)
+	{
+		char const * ft = "?";
+		switch(ff[i].FontType)
+		{
+			case DEVICE_FONTTYPE: ft = "dev"; break;
+			case RASTER_FONTTYPE: ft = "ras"; break;
+			case TRUETYPE_FONTTYPE: ft = "ttf"; break;
+		};
+
+		printf(" %3d | %s | %s | %s | %d | %s\n", i+1, ft,
+			ff[i].elfe.elfLogFont.lfFaceName,
+			ff[i].elfe.elfStyle,
+			ff[i].elfe.elfLogFont.lfCharSet,
+			ff[i].elfe.elfScript);
+	}
+
 	return 0;
 
 	window::create_class(class_name, MainFrameProc, i);

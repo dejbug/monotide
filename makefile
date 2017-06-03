@@ -44,7 +44,18 @@ build/monotide.exe: build/lib_font.o
 build/monotide.exe: build/main.o
 build/monotide.exe: ; $(CXX) $^ -o $@ $(CXXFLAGS)
 
-build/%.o: src/%.cpp ; $(CXX) -c $^ -o $@ $(CXXFLAGS)
+build/lib_window.o: src/lib_window.cpp
+build/lib_window.o: src/lib_window.h
+	$(CXX) -c $(filter %.cpp,$^) -o $@ $(CXXFLAGS)
+
+build/lib_font.o: src/lib_font.cpp
+build/lib_font.o: src/lib_font.h
+	$(CXX) -c $(filter %.cpp,$^) -o $@ $(CXXFLAGS)
+
+build/main.o: src/main.cpp
+build/main.o: src/lib_font.h
+build/main.o: src/lib_window.h
+	$(CXX) -c $(filter %.cpp,$^) -o $@ $(CXXFLAGS)
 
 .PHONY: clean
 clean:
