@@ -31,6 +31,7 @@ void lib::font::list_fonts(HDC hdc)
 
 	LOGFONT lf;
 	memset(&lf, 0, sizeof(LOGFONT));
-	lf.lfCharSet = DEFAULT_CHARSET;
+	// lf.lfCharSet = DEFAULT_CHARSET;
+	lf.lfCharSet = ANSI_CHARSET;
 	EnumFontFamiliesEx(hdc, &lf, list_fonts_cb, (LPARAM) &count, 0);
 }
