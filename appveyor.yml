@@ -1,0 +1,29 @@
+
+before_build:
+  - cmd: call scripts\appveyor-build-enter.bat
+
+after_build:
+  - cmd: call scripts\appveyor-build-leave.bat
+
+# The standard flow calls msbuild.exe. We need to
+# overwrite this default behavior here.
+build_script:
+  # cmd: C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin\mingw32-make.exe
+  - cmd: make
+
+# We don't need tests right now.
+test: off
+
+artifacts:
+  # Push the entire "build" folder as a zip
+  - path: build
+
+deploy:
+  # Deploy to GitHub Releases
+  - provider: GitHub
+    artifact: build
+    draft: false
+    prerelease: false
+    on:
+      branch: master                # release from master branch only
+      appveyor_repo_tag: true       # deploy on tag push only
