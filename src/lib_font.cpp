@@ -11,12 +11,17 @@ int CALLBACK list_fonts_cb(
 	char const * ft = "?";
 	switch(FontType)
 	{
-		case DEVICE_FONTTYPE: ft = "D"; break;
-		case RASTER_FONTTYPE: ft = "R"; break;
-		case TRUETYPE_FONTTYPE: ft = "T"; break;
+		case DEVICE_FONTTYPE: ft = "dev"; break;
+		case RASTER_FONTTYPE: ft = "ras"; break;
+		case TRUETYPE_FONTTYPE: ft = "ttf"; break;
 	}
 
-	printf("%4d : %s '%s'\n", count++, ft, lpelfe->elfFullName);
+	printf("%4d | %s | %s | %s | %d | %s |\n", count++, ft,
+		lpelfe->elfLogFont.lfFaceName, // lpelfe->elfFullName,
+		lpelfe->elfStyle,
+		lpelfe->elfLogFont.lfCharSet,
+		lpelfe->elfScript);
+
 	return TRUE;
 }
 
