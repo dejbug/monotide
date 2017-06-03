@@ -31,10 +31,29 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 {
 	static std::vector<font::EnumFontInfo> ff;
 	static size_t ff_skipped = 0;
+	static UINT rows_per_scroll = 1;
 
 	switch(m)
 	{
 		default: break;
+
+		case WM_MOUSEWHEEL:
+		{
+			short const zDelta = (short) HIWORD(w);
+
+			if (zDelta > 0 && ff_skipped >= rows_per_scroll)
+			{
+				ff_skipped -= rows_per_scroll;
+				InvalidateRect(h, NULL, TRUE);
+			}
+			if (zDelta < 0 && ff_skipped + rows_per_scroll < ff.size())
+			{
+				ff_skipped += rows_per_scroll;
+				InvalidateRect(h, NULL, TRUE);
+			}
+
+			UpdateWindow(h);
+		}
 
 		case WM_PAINT:
 		{
@@ -47,6 +66,9 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 		case WM_CREATE:
 		{
+			SystemParametersInfo(SPI_GETWHEELSCROLLLINES,
+				0, &rows_per_scroll, 0);
+
 			HDC dc = GetDC(h);
 			font::list_fonts(ff, ANSI_CHARSET, true, dc);
 			ReleaseDC(h, dc);
@@ -84,8 +106,6 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 {
-	font::list_fonts(ff, ANSI_CHARSET, true, dc);
-
 	unsigned const margin = 8;
 	HWND const parent = WindowFromDC(dc);
 	RECT cr;
