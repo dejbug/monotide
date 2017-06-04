@@ -111,6 +111,7 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 	RECT cr;
 	GetClientRect(parent, &cr);
 	int y = 0;
+	INT * kerns = new INT[1024];
 
 	for (size_t i=skip; i<ff.size(); ++i)
 	{
@@ -129,10 +130,25 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 		HFONT hf = CreateFontIndirect(&ff[i].elfe.elfLogFont);
 		HGDIOBJ old = SelectObject(dc, hf);
 
+		TEXTMETRIC tm;
+		GetTextMetrics(dc, &tm);
+
+		// memset(kerns, 0, text_len);
+		long kerns_sum = 0;
+		for (size_t i=0; i<text_len; ++i)
+		{
+			// GetCharWidth32(dc, text[i], text[i], &kerns[i]);
+			// kerns[i] = ff[i].elfe.elfLogFont.lfWidth;
+			kerns[i] = tm.tmMaxCharWidth;
+			kerns_sum += kerns[i];
+		}
+
+		ExtTextOut(dc, margin, margin + y,
+			0, nullptr, text, text_len, kerns);
+
 		SIZE text_size;
 		GetTextExtentPoint32(dc, text, text_len, &text_size);
-
-		TextOut(dc, margin, margin + y, text, text_len);
+		text_size.cx = kerns_sum;
 
 		SelectObject(dc, old);
 		DeleteObject(hf);
@@ -144,4 +160,6 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 
 		y += ff[i].elfe.elfLogFont.lfHeight;
 	}
+
+	delete[] kerns;
 }
