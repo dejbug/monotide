@@ -106,11 +106,11 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 {
-	unsigned const margin = 8;
+	int const margin = 8;
 	HWND const parent = WindowFromDC(dc);
 	RECT cr;
 	GetClientRect(parent, &cr);
-	unsigned y = 0;
+	int y = 0;
 
 	for (size_t i=skip; i<ff.size(); ++i)
 	{
@@ -124,12 +124,23 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 		// 	ff[i].elfe.elfScript);
 
 		char const * text = (char const *) ff[i].elfe.elfFullName;
+		size_t const text_len = strlen(text);
 
 		HFONT hf = CreateFontIndirect(&ff[i].elfe.elfLogFont);
 		HGDIOBJ old = SelectObject(dc, hf);
-		TextOut(dc, margin, margin + y, text, strlen(text));
+
+		SIZE text_size;
+		GetTextExtentPoint32(dc, text, text_len, &text_size);
+
+		TextOut(dc, margin, margin + y, text, text_len);
+
 		SelectObject(dc, old);
 		DeleteObject(hf);
+
+		RECT const text_box_rect = RECT{margin - 1, margin + y - 1, margin + text_size.cx + 1, margin + y + text_size.cy + 1};
+		HBRUSH const text_box_brush = (HBRUSH) GetStockObject(DC_BRUSH);
+		SetDCBrushColor(dc, RGB(100,100,100));
+		FrameRect(dc, &text_box_rect, text_box_brush);
 
 		y += ff[i].elfe.elfLogFont.lfHeight;
 	}
