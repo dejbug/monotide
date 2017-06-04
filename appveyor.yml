@@ -9,6 +9,7 @@ after_build:
 # overwrite this default behavior here.
 build_script:
   # cmd: C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin\mingw32-make.exe
+  - cmd: echo $(APPVEYOR_REPO_TAG_NAME)
   - cmd: call scripts\appveyor-build-run.bat
 
 # We don't need tests right now.
