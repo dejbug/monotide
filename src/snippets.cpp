@@ -17,7 +17,7 @@
 /// supposed to be used in later stages e.g. to draw a frame around the
 /// label or to position some labels side-by-side if they fit inside a row .
 
-void lib::snippets::draw_font_label_1(HDC dc, RECT & rc,
+void snippets::draw_font_label_1(HDC dc, RECT & rc,
 		lib::font::EnumFontInfo & fi)
 {
 	char const * text = (char const *) fi.elfe.elfFullName;
@@ -72,10 +72,4 @@ void lib::snippets::draw_font_label_1(HDC dc, RECT & rc,
 
 	SelectObject(dc, old);
 	DeleteObject(hf);
-
-	HBRUSH const text_box_brush = (HBRUSH) GetStockObject(DC_BRUSH);
-	SetDCBrushColor(dc, RGB(100,100,100));
-	FrameRect(dc, &rc, text_box_brush);
-
-
 }

@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <vector>
+#include "snippets.h"
 #include "lib_window.h"
 #include "lib_font.h"
 
@@ -126,64 +127,15 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 		// 	ff[i].elfe.elfLogFont.lfCharSet,
 		// 	ff[i].elfe.elfScript);
 
-		char const * text = (char const *) ff[i].elfe.elfFullName;
-		size_t const text_len = strlen(text);
+		RECT rc = {margin, margin + y, 0, 0};
+		snippets::draw_font_label_1(dc, rc, ff[i]);
 
-		HFONT hf = CreateFontIndirect(&ff[i].elfe.elfLogFont);
-		HGDIOBJ old = SelectObject(dc, hf);
-
-		// TEXTMETRIC tm;
-		// GetTextMetrics(dc, &tm);
-
-		// GetCharWidth32(dc, 0, 256-1, char_widths);
-
-		// long offsets_sum = 0;
-		// for (size_t i=0; i<text_len; ++i)
-		// {
-		// 	// GetCharWidth32(dc, text[i], text[i], &text_offsets[i]);
-		// 	// text_offsets[i] = ff[i].elfe.elfLogFont.lfWidth;
-		// 	// text_offsets[i] = tm.tmMaxCharWidth;
-		// 	// if (text[i] >= 0 && text[i] < 256)
-		// 	// 	text_offsets[i] = char_widths[(unsigned char) text[i]];
-		// 	// else
-		// 	// 	text_offsets[i] = tm.tmMaxCharWidth;
-		// 	text_offsets[i] = tm.tmAveCharWidth;
-		// 	offsets_sum += text_offsets[i];
-		// }
-
-		SIZE text_size;
-		GetTextExtentPoint32(dc, text, text_len, &text_size);
-		// text_size.cx = offsets_sum;
-
-		// RECT tr;
-		// int const text_height = DrawTextEx(dc, (char *) text, text_len, &tr,
-		// 	DT_CALCRECT|DT_NOCLIP|DT_SINGLELINE, nullptr);
-		// if (text_height > 0)
-		// {
-		// 	text_size.cx = tr.right - tr.left;
-		// 	text_size.cy = text_height;
-		// }
-
-		RECT const text_box_rect = RECT{margin - 1, margin + y - 1, margin + text_size.cx + 1, margin + y + text_size.cy + 1};
-
-		// ExtTextOut(dc, margin, margin + y,
-		// 	0, nullptr, text, text_len, text_offsets);
-
-		// DrawTextEx(dc, (char *) text, text_len, (RECT *) &text_box_rect,
-		// 	DT_NOCLIP|DT_SINGLELINE, nullptr);
-
-		ExtTextOut(dc, text_box_rect.left + 1, text_box_rect.top + 1,
-			0, nullptr, text, text_len, nullptr);
-
-		SelectObject(dc, old);
-		DeleteObject(hf);
-
-		HBRUSH const text_box_brush = (HBRUSH) GetStockObject(DC_BRUSH);
-		SetDCBrushColor(dc, RGB(100,100,100));
-		FrameRect(dc, &text_box_rect, text_box_brush);
+		// HBRUSH const text_box_brush = (HBRUSH) GetStockObject(DC_BRUSH);
+		// SetDCBrushColor(dc, RGB(100,100,100));
+		// FrameRect(dc, &text_box_rect, text_box_brush);
 
 		// y += ff[i].elfe.elfLogFont.lfHeight;
-		y += text_size.cy + 1;
+		y = rc.bottom - rc.left + 1;
 	}
 
 	// delete[] text_offsets;
