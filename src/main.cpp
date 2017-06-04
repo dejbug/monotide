@@ -27,46 +27,21 @@ int WINAPI WinMain(HINSTANCE i, HINSTANCE, LPSTR, int)
 	return msg.wParam;
 }
 
-void draw_fonts(HWND, HDC, std::vector<font::EnumFontInfo> &, size_t=0);
+void draw_fonts(HWND, HDC, std::vector<font::EnumFontInfo> &,
+	size_t, size_t &);
 void draw_info(HDC);
 
 LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 {
 	static std::vector<font::EnumFontInfo> ff;
-	static size_t ff_skipped = 0;
 	static UINT rows_per_scroll = 1;
 	static window::BackgroundDC offscreen;
+	static snippets::ScrollBar vbar(h, SB_VERT);
+	static size_t count_rendered = 0;
 
 	switch(m)
 	{
 		default: break;
-
-		case WM_MOUSEWHEEL:
-		{
-			short const zDelta = (short) HIWORD(w);
-
-			if (zDelta > 0 && ff_skipped >= rows_per_scroll)
-			{
-				ff_skipped -= rows_per_scroll;
-				InvalidateRect(h, NULL, TRUE);
-				// UpdateWindow(h);
-			}
-
-			else if (zDelta < 0 && ff_skipped + rows_per_scroll < ff.size())
-			{
-				ff_skipped += rows_per_scroll;
-				InvalidateRect(h, NULL, TRUE);
-				// UpdateWindow(h);
-			}
-
-			return 0;
-		}
-
-		case WM_ERASEBKGND:
-			offscreen.clear(0);
-			draw_info(offscreen.handle);
-			offscreen.flip();
-			return 0;
 
 		case WM_PAINT:
 		{
@@ -74,8 +49,72 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 			BeginPaint(h, &ps);
 			EndPaint(h, &ps);
 
-			draw_fonts(h, offscreen.handle, ff, ff_skipped);
+			draw_fonts(h, offscreen.handle, ff, vbar.index, count_rendered);
 			offscreen.flip();
+
+			return 0;
+		}
+
+		case WM_ERASEBKGND:
+		{
+			offscreen.clear(0);
+			draw_info(offscreen.handle);
+			offscreen.flip();
+			return 0;
+		}
+
+		case WM_VSCROLL:
+		{
+			int const nScrollCode = (int) LOWORD(w);
+			short int const nPos = (short int) HIWORD(w);
+			// HWND const hwndScrollBar = (HWND) l;
+
+			switch(nScrollCode)
+			{
+				case SB_LINEUP:
+					if (vbar.scroll(-1))
+						InvalidateRect(h, NULL, TRUE);
+					break;
+
+				case SB_LINEDOWN:
+					if (vbar.scroll(+1))
+						InvalidateRect(h, NULL, TRUE);
+					break;
+
+				case SB_PAGEUP:
+					if (vbar.scroll(-rows_per_scroll))
+						InvalidateRect(h, NULL, TRUE);
+					break;
+
+				case SB_PAGEDOWN:
+					if (vbar.scroll(+count_rendered-1))
+						InvalidateRect(h, NULL, TRUE);
+					break;
+
+				case SB_THUMBTRACK:
+					vbar.index = nPos;
+					vbar.update();
+					InvalidateRect(h, NULL, TRUE);
+					break;
+
+				case SB_THUMBPOSITION:
+					InvalidateRect(h, NULL, TRUE);
+					break;
+
+			}
+
+			return 0;
+		}
+
+		case WM_MOUSEWHEEL:
+		{
+			short const zDelta = (short) HIWORD(w);
+
+			if (zDelta > 0 && vbar.scroll(-rows_per_scroll))
+				InvalidateRect(h, NULL, TRUE);
+
+			else if (zDelta < 0 && vbar.scroll(+rows_per_scroll))
+				InvalidateRect(h, NULL, TRUE);
 
 			return 0;
 		}
@@ -98,7 +137,9 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 			font::list_fonts(ff, ANSI_CHARSET, true, dc);
 			ReleaseDC(h, dc);
 
-			printf(" %d fonts found\n", ff.size());
+			// printf(" %d fonts found\n", ff.size());
+
+			vbar.set_count(ff.size());
 			return 0;
 		}
 
@@ -106,6 +147,16 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 		{
 			switch(w)
 			{
+				case VK_PRIOR:
+					if (vbar.scroll(-rows_per_scroll))
+						InvalidateRect(h, NULL, TRUE);
+					break;
+
+				case VK_NEXT:
+					if (vbar.scroll(+count_rendered-1))
+						InvalidateRect(h, NULL, TRUE);
+					break;
+
 				case VK_ESCAPE:
 					SendMessage(h, WM_CLOSE, 0, 0);
 					break;
@@ -129,24 +180,22 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 	return DefWindowProc(h, m, w, l);
 }
 
-void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
+void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip, size_t & count_rendered)
 {
 	HBRUSH const frame_brush = (HBRUSH) GetStockObject(DC_BRUSH);
 	SIZE const frame_extra = {3, 2};
 	SIZE const padding = {8, 64};
 	SIZE client_size;
-	// lib::window::get_inner_size(WindowFromDC(dc), client_size);
 	lib::window::get_inner_size(h, client_size);
-	// PRINT_VAR(client_size.cx, "%ld");
-	// PRINT_VAR(client_size.cy, "%ld");
-	int const bottom_y = client_size.cy - padding.cy;
+	SIZE const cutoff = {
+		client_size.cx - padding.cx,
+		client_size.cy - padding.cy};
 
+	count_rendered = 0;
 	int y = 0;
 
-	for (size_t i=skip; i<ff.size(); ++i)
+	for (size_t i=skip; i<ff.size(); ++i, ++count_rendered)
 	{
-		// font::print_font_info(ff[i]);
-
 		char const * text = (char const *) ff[i].elfe.elfFullName;
 		size_t const text_len = strlen(text);
 
@@ -157,16 +206,17 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff, size_t ski
 
 		int const next_y = tr.bottom - padding.cy + frame_extra.cy + 1;
 
-		if (next_y > bottom_y) break;
+		if (next_y > cutoff.cy) break;
 
 		InflateRect(&tr, frame_extra.cx, frame_extra.cy);
-		SetDCBrushColor(dc, RGB(200,80,80));
+		// SetDCBrushColor(dc, RGB(200,80,80));
+		SetDCBrushColor(dc, RGB(100,100,100));
 		FrameRect(dc, &tr, frame_brush);
 
 		RECT rc = {padding.cx, padding.cy + y, 0, 0};
 		// lib::font::draw_font_label(dc, rc, ff[i]);
-		SetBkColor(dc, RGB(10,10,10));
-		SetTextColor(dc, RGB(200,200,200));
+		// SetBkColor(dc, RGB(10,10,10));
+		// SetTextColor(dc, RGB(200,200,200));
 		ExtTextOut(dc, rc.left, rc.top,
 			0, nullptr, text, text_len, nullptr);
 

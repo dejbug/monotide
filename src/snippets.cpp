@@ -97,14 +97,44 @@ void snippets::calc_text_rect_1(RECT & rc, HDC dc,
 
 }
 
-/// draw_font_label_*()
+snippets::ScrollBar::ScrollBar(HWND h, int nBar)
+		: parent(h), bar_id(nBar)
+{
+}
 
-/// -- These are intended to be used in the drawing logic of font selection
-/// browsers which show a font preview . The preview is just the title of
-/// the font drawn in that font .
+void snippets::ScrollBar::show(bool on)
+{
+	ShowScrollBar(parent, bar_id, on ? TRUE : FALSE);
+}
 
-/// -- The functions' numeric suffix is to be read as version number . It
-/// reflects my difficulties with the attempt to have the function return
-/// an accurate RECT in 'rc' of the drawn text's boundary . The RECT is
-/// supposed to be used in later stages e.g. to draw a frame around the
-/// label or to position some labels side-by-side if they fit inside a row .
+void snippets::ScrollBar::set_count(size_t _count)
+{
+	count = _count ? _count - 1 : 0;
+	SetScrollRange(parent, bar_id, 0, count, FALSE);
+	show(count > 0);
+}
+
+bool snippets::ScrollBar::scroll(int steps, bool update)
+{
+	if (count == 0) return false;
+
+	bool const can_add_1 = steps > 0 && index <= count - steps;
+	bool const can_add_2 = steps < 0 && index > (size_t) -steps;
+
+	size_t temp = index;
+
+	if (can_add_1 || can_add_2) temp += steps;
+	else if (steps < 0 && index <= (size_t) -steps) temp = 0;
+
+	if (temp == index) return false;
+	index = temp;
+
+	if (update) this->update();
+
+	return true;
+}
+
+void snippets::ScrollBar::update()
+{
+	SetScrollPos(parent, bar_id, index, TRUE);
+}

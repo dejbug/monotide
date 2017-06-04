@@ -13,24 +13,23 @@ define F_DEL_TREE
 @echo -- dir "$(1)" removed
 endef
 
-# SUBSYSTEM := windows
 # TARGET := release
-SUBSYSTEM := console
 TARGET := debug
-WINLIBS := gdi32 shell32
+WINLIBS := gdi32
 
 CXX := g++
 
 CXXFLAGS :=
 CXXFLAGS += -std=c++11 -Wall -pedantic
-CXXFLAGS += -Wl,--subsystem=$(SUBSYSTEM)
 CXXFLAGS += $(addprefix -l,$(WINLIBS))
 CXXFLAGS += -DWIN32_LEAN_AND_MEAN -DSTRICT
 
 ifeq ($(TARGET),release)
 CXXFLAGS += -O2
+CXXFLAGS += -Wl,--subsystem=windows
 else
 CXXFLAGS += -g -O
+CXXFLAGS += -Wl,--subsystem=console
 endif
 
 .PHONY: all
