@@ -136,30 +136,32 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 
 		GetCharWidth32(dc, 0, 256-1, char_widths);
 
-		long kerns_sum = 0;
+		long offsets_sum = 0;
 		for (size_t i=0; i<text_len; ++i)
 		{
 			// GetCharWidth32(dc, text[i], text[i], &text_offsets[i]);
 			// text_offsets[i] = ff[i].elfe.elfLogFont.lfWidth;
 			// text_offsets[i] = tm.tmMaxCharWidth;
-			if (text[i] >= 0 && text[i] < 256)
-				text_offsets[i] = char_widths[text[i]];
-			else
-				text_offsets[i] = tm.tmMaxCharWidth;
-			kerns_sum += text_offsets[i];
+			// if (text[i] >= 0 && text[i] < 256)
+			// 	text_offsets[i] = char_widths[(unsigned char) text[i]];
+			// else
+			// 	text_offsets[i] = tm.tmMaxCharWidth;
+			text_offsets[i] = tm.tmAveCharWidth;
+			offsets_sum += text_offsets[i];
 		}
+
+		SIZE text_size;
+		GetTextExtentPoint32(dc, text, text_len, &text_size);
+		// text_size.cx = offsets_sum;
+
+		RECT const text_box_rect = RECT{margin - 1, margin + y - 1, margin + text_size.cx + 1, margin + y + text_size.cy + 1};
 
 		ExtTextOut(dc, margin, margin + y,
 			0, nullptr, text, text_len, text_offsets);
 
-		SIZE text_size;
-		GetTextExtentPoint32(dc, text, text_len, &text_size);
-		text_size.cx = kerns_sum;
-
 		SelectObject(dc, old);
 		DeleteObject(hf);
 
-		RECT const text_box_rect = RECT{margin - 1, margin + y - 1, margin + text_size.cx + 1, margin + y + text_size.cy + 1};
 		HBRUSH const text_box_brush = (HBRUSH) GetStockObject(DC_BRUSH);
 		SetDCBrushColor(dc, RGB(100,100,100));
 		FrameRect(dc, &text_box_rect, text_box_brush);
