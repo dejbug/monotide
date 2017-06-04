@@ -3,6 +3,7 @@
 echo -- [ running ] "appveyor build script"
 
 echo -- selecting build target
+echo APPVEYOR_REPO_TAG is "%APPVEYOR_REPO_TAG%"
 
 IF "%APPVEYOR_REPO_TAG%"=="true" goto release
 REM goto debug
