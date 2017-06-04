@@ -128,3 +128,19 @@ void lib::window::center_to_parent(HWND handle)
 
 	set_pos(handle, rp.left + dx, rp.top + dy);
 }
+
+void lib::window::get_outer_size(HWND h, SIZE & s)
+{
+	RECT r;
+	GetWindowRect(h, &r);
+	s.cx = r.right - r.left;
+	s.cy = r.bottom - r.top;
+}
+
+void lib::window::get_inner_size(HWND h, SIZE & s)
+{
+	RECT r;
+	GetClientRect(h, &r);
+	s.cx = r.right;
+	s.cy = r.bottom;
+}

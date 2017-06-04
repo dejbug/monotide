@@ -41,6 +41,7 @@ build: ; $(call MKDIR,build)
 
 build/monotide.exe: build/lib_window.o
 build/monotide.exe: build/lib_font.o
+build/monotide.exe: build/snippets.o
 build/monotide.exe: build/main.o
 build/monotide.exe: ; $(CXX) $^ -o $@ $(CXXFLAGS)
 
@@ -53,8 +54,13 @@ build/lib_font.o: src/lib_font.h
 	$(CXX) -c $(filter %.cpp,$^) -o $@ $(CXXFLAGS)
 
 build/main.o: src/main.cpp
+build/main.o: src/snippets.h
 build/main.o: src/lib_font.h
 build/main.o: src/lib_window.h
+	$(CXX) -c $(filter %.cpp,$^) -o $@ $(CXXFLAGS)
+
+build/snippets.o: src/snippets.cpp
+build/snippets.o: src/snippets.h
 	$(CXX) -c $(filter %.cpp,$^) -o $@ $(CXXFLAGS)
 
 .PHONY: clean

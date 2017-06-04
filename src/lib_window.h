@@ -18,5 +18,8 @@ void set_size(HWND, int width, int height);
 void set_pos(HWND, int x, int y);
 void center_to_parent(HWND);
 
+void get_inner_size(HWND, SIZE &);
+void get_outer_size(HWND, SIZE &);
+
 }
 }

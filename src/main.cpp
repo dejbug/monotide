@@ -107,16 +107,17 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 {
 	int const margin = 8;
-	HWND const parent = WindowFromDC(dc);
-	RECT cr;
-	GetClientRect(parent, &cr);
+
+	SIZE client_size;
+	lib::window::get_inner_size(WindowFromDC(dc), client_size);
+
 	int y = 0;
 	// INT * char_widths = new INT[256];
 	// INT * text_offsets = new INT[1024];
 
 	for (size_t i=skip; i<ff.size(); ++i)
 	{
-		if (y + ff[i].elfe.elfLogFont.lfHeight > cr.bottom - margin)
+		if (y + ff[i].elfe.elfLogFont.lfHeight > client_size.cy - margin)
 			break;
 
 		// printf(" %3d | %s | %s | %s | %d | %s\n", i+1, ft,
