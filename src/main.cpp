@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <vector>
+#include "macros.h"
 #include "snippets.h"
 #include "lib_window.h"
 #include "lib_font.h"
@@ -107,7 +108,9 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 {
+	HBRUSH const frame_brush = (HBRUSH) GetStockObject(DC_BRUSH);
 	int const margin = 8;
+	SIZE const frame_extra = {3, 2};
 
 	SIZE client_size;
 	lib::window::get_inner_size(WindowFromDC(dc), client_size);
@@ -118,8 +121,20 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 
 	for (size_t i=skip; i<ff.size(); ++i)
 	{
-		if (y + ff[i].elfe.elfLogFont.lfHeight > client_size.cy - margin)
-			break;
+		char const * text = (char const *) ff[i].elfe.elfFullName;
+		size_t const text_len = strlen(text);
+		int const bottom_y = client_size.cy - margin;
+
+		RECT tr = {margin, margin + y};
+		snippets::calc_text_rect(tr, dc, ff[i], text, text_len);
+
+		int const next_y = tr.bottom - margin + frame_extra.cy + 1;
+
+		if (next_y > bottom_y) break;
+
+		InflateRect(&tr, frame_extra.cx, frame_extra.cy);
+		SetDCBrushColor(dc, RGB(100,100,100));
+		FrameRect(dc, &tr, frame_brush);
 
 		// printf(" %3d | %s | %s | %s | %d | %s\n", i+1, ft,
 		// 	ff[i].elfe.elfLogFont.lfFaceName,
@@ -130,12 +145,7 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 		RECT rc = {margin, margin + y, 0, 0};
 		snippets::draw_font_label_1(dc, rc, ff[i]);
 
-		// HBRUSH const text_box_brush = (HBRUSH) GetStockObject(DC_BRUSH);
-		// SetDCBrushColor(dc, RGB(100,100,100));
-		// FrameRect(dc, &text_box_rect, text_box_brush);
-
-		// y += ff[i].elfe.elfLogFont.lfHeight;
-		y = rc.bottom - rc.left + 1;
+		y = next_y;
 	}
 
 	// delete[] text_offsets;

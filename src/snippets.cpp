@@ -3,7 +3,51 @@
 	available documentation of my thought process than git logs .
 */
 #include "snippets.h"
+#include "macros.h"
 #include "lib_window.h"
+
+void snippets::calc_text_rect(RECT & rc, HDC dc,
+		lib::font::EnumFontInfo & fi,
+		char const * text, size_t text_len)
+{
+	lib::font::EnumFontInfoLoader efil(dc, fi);
+
+	// TEXTMETRIC tm;
+	// GetTextMetrics(dc, &tm);
+
+	// GetCharWidth32(dc, 0, 256-1, char_widths);
+
+	// long offsets_sum = 0;
+	// for (size_t i=0; i<text_len; ++i)
+	// {
+	// 	// GetCharWidth32(dc, text[i], text[i], &text_offsets[i]);
+	// 	// text_offsets[i] = fi.elfe.elfLogFont.lfWidth;
+	// 	// text_offsets[i] = tm.tmMaxCharWidth;
+	// 	// if (text[i] >= 0 && text[i] < 256)
+	// 	// 	text_offsets[i] = char_widths[(unsigned char) text[i]];
+	// 	// else
+	// 	// 	text_offsets[i] = tm.tmMaxCharWidth;
+	// 	text_offsets[i] = tm.tmAveCharWidth;
+	// 	offsets_sum += text_offsets[i];
+	// }
+
+	SIZE text_size;
+	GetTextExtentPoint32(dc, text, text_len, &text_size);
+
+	// text_size.cx = offsets_sum;
+
+	// RECT tr;
+	// int const text_height = DrawTextEx(dc, (char *) text, text_len, &tr,
+	// 	DT_CALCRECT|DT_NOCLIP|DT_SINGLELINE, nullptr);
+	// if (text_height > 0)
+	// {
+	// 	text_size.cx = tr.right - tr.left;
+	// 	text_size.cy = text_height;
+	// }
+
+	rc.right = rc.left + text_size.cx;
+	rc.bottom = rc.top + text_size.cy;
+}
 
 /// draw_font_label_*()
 
@@ -23,8 +67,7 @@ void snippets::draw_font_label_1(HDC dc, RECT & rc,
 	char const * text = (char const *) fi.elfe.elfFullName;
 	size_t const text_len = strlen(text);
 
-	HFONT hf = CreateFontIndirect(&fi.elfe.elfLogFont);
-	HGDIOBJ old = SelectObject(dc, hf);
+	lib::font::EnumFontInfoLoader efil(dc, fi);
 
 	// TEXTMETRIC tm;
 	// GetTextMetrics(dc, &tm);
@@ -67,9 +110,7 @@ void snippets::draw_font_label_1(HDC dc, RECT & rc,
 	// DrawTextEx(dc, (char *) text, text_len, (RECT *) &rc,
 	// 	DT_NOCLIP|DT_SINGLELINE, nullptr);
 
-	ExtTextOut(dc, rc.left + 1, rc.top + 1,
+	ExtTextOut(dc, rc.left, rc.top,
 		0, nullptr, text, text_len, nullptr);
 
-	SelectObject(dc, old);
-	DeleteObject(hf);
 }

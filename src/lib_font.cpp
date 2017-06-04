@@ -1,6 +1,33 @@
 #include "lib_font.h"
 #include <stdio.h>
 
+lib::font::EnumFontInfo::EnumFontInfo(
+		ENUMLOGFONTEX elfe, NEWTEXTMETRICEX ntme, int FontType)
+		: elfe(elfe), ntme(ntme), FontType(FontType)
+{
+}
+
+lib::font::EnumFontInfoLoader::EnumFontInfoLoader(
+		HDC dc, lib::font::EnumFontInfo & efi)
+		: dc(dc)
+{
+	handle = CreateFontIndirect(&efi.elfe.elfLogFont);
+	old = SelectObject(dc, handle);
+}
+
+lib::font::EnumFontInfoLoader::~EnumFontInfoLoader()
+{
+	if(handle) {
+		SelectObject(dc, old);
+		DeleteObject(handle);
+	}
+}
+
+void lib::font::EnumFontInfoLoader::detach()
+{
+	handle = nullptr;
+}
+
 struct ListFontsContext
 {
 	size_t index = 0;

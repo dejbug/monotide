@@ -11,10 +11,22 @@ struct EnumFontInfo
 	NEWTEXTMETRICEX ntme;
 	int FontType = 0;
 
-	EnumFontInfo(ENUMLOGFONTEX elfe, NEWTEXTMETRICEX ntme, int FontType)
-			: elfe(elfe), ntme(ntme), FontType(FontType)
-	{
-	}
+	EnumFontInfo(ENUMLOGFONTEX elfe, NEWTEXTMETRICEX ntme, int FontType);
+};
+
+struct EnumFontInfoLoader
+{
+	HDC dc = nullptr;
+	HFONT handle = nullptr;
+	HGDIOBJ old = nullptr;
+
+	EnumFontInfoLoader(HDC, EnumFontInfo &);
+	virtual ~EnumFontInfoLoader();
+
+	EnumFontInfoLoader(EnumFontInfoLoader const &) = delete;
+	EnumFontInfoLoader(EnumFontInfoLoader &&) = delete;
+
+	void detach();
 };
 
 void list_fonts(std::vector<EnumFontInfo> & out,
