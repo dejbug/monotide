@@ -1,10 +1,126 @@
 #include "lib_window.h"
+#include "macros.h"
+
+lib::window::BackgroundDC::BackgroundDC(HDC parent)
+		: error(E_OK), parent(parent), handle(nullptr), bmp(nullptr)
+{
+	if (!parent) return;
+
+	handle = CreateCompatibleDC(parent);
+	if (!handle) error = E_CCDC;
+	else resize();
+}
+
+lib::window::BackgroundDC::BackgroundDC(lib::window::BackgroundDC && other)
+		: error(other.error), parent(other.parent), handle(other.handle)
+		, bmp(other.bmp), w(other.w), h(other.h)
+{
+	other.parent = nullptr;
+	other.handle = nullptr;
+	other.bmp = nullptr;
+	other.w = 0;
+	other.h = 0;
+}
+
+lib::window::BackgroundDC::~BackgroundDC()
+{
+	delete_bmp();
+	delete_dc();
+}
+
+lib::window::BackgroundDC & lib::window::BackgroundDC::operator=(lib::window::BackgroundDC && other)
+{
+	parent = other.parent;
+	handle = other.handle;
+	bmp = other.bmp;
+	w = other.w;
+	h = other.h;
+
+	other.parent = nullptr;
+	other.handle = nullptr;
+	other.bmp = nullptr;
+	other.w = 0;
+	other.h = 0;
+
+	return *this;
+}
+
+void lib::window::BackgroundDC::delete_bmp()
+{
+	if (handle) SelectObject(handle, (HBITMAP)nullptr);
+	if (bmp) { DeleteObject(bmp); bmp = nullptr; }
+}
+
+void lib::window::BackgroundDC::delete_dc()
+{
+	if (!handle) return;
+	DeleteDC(handle);
+	handle = nullptr;
+}
+
+void lib::window::BackgroundDC::resize(int w, int h)
+{
+	if (error) return;
+	if (!handle) return;
+
+	if (bmp) delete_bmp();
+
+	bmp = CreateCompatibleBitmap(parent, w, h);
+	if (!bmp)
+	{
+		error = E_CCBMP;
+		return;
+	}
+
+	SelectObject(handle, (HBITMAP)bmp);
+
+	this->w = w;
+	this->h = h;
+}
+
+void lib::window::BackgroundDC::resize()
+{
+	if (error) return;
+	RECT client_rect;
+	GetClientRect(WindowFromDC(parent), &client_rect);
+	resize(client_rect.right, client_rect.bottom);
+}
+
+void lib::window::BackgroundDC::flip()
+{
+	if (error) return;
+	BitBlt(parent, 0, 0, w, h, handle, 0, 0, SRCCOPY);
+}
+
+void lib::window::BackgroundDC::clear(UINT id)
+{
+	if (error) return;
+	RECT client_rect;
+	GetClientRect(WindowFromDC(parent), &client_rect);
+	FillRect(handle, &client_rect, (HBRUSH)(id+1));
+}
+
+void lib::window::BackgroundDC::fill(COLORREF c)
+{
+	if (error) return;
+
+	HGDIOBJ old_pen = SelectObject(handle, GetStockObject(NULL_PEN));
+	HGDIOBJ old_bru = SelectObject(handle, GetStockObject(DC_BRUSH));
+	SetDCBrushColor(handle, c);
+
+	RECT client_rect;
+	GetClientRect(WindowFromDC(parent), &client_rect);
+	Rectangle(handle, 0, 0, client_rect.right, client_rect.bottom);
+
+	SelectObject(handle, old_pen);
+	SelectObject(handle, old_bru);
+}
 
 int lib::window::run_main_loop(MSG & msg)
 {
 	while (1)
 	{
-		int res = GetMessage(&msg, NULL, 0, 0);
+		int res = GetMessage(&msg, nullptr, 0, 0);
 		if (0 == res) break; // WM_QUIT
 		else if (-1 == res) return -1; // errors!
 		TranslateMessage(&msg);
@@ -26,11 +142,11 @@ void lib::window::init_class(WNDCLASSEX & wc)
 
 	wc.hInstance = GetModuleHandle(nullptr);
 	wc.hIcon = wc.hIconSm =
-		LoadIcon(NULL, IDI_APPLICATION);
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+		LoadIcon(nullptr, IDI_APPLICATION);
+	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
 
-	wc.lpszMenuName = NULL;
+	wc.lpszMenuName = nullptr;
 
 	wc.lpszClassName = nullptr;
 	wc.lpfnWndProc = DefWindowProc;
@@ -70,10 +186,10 @@ HWND lib::window::create_frame(LPCSTR name, HINSTANCE i)
 		WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN,
 		CW_USEDEFAULT, CW_USEDEFAULT,
 		CW_USEDEFAULT, CW_USEDEFAULT,
-		NULL,
-		NULL,
+		nullptr,
+		nullptr,
 		i ? i : GetModuleHandle(nullptr),
-		NULL
+		nullptr
 	);
 }
 
@@ -90,19 +206,19 @@ HWND lib::window::create_child(HWND parent, UINT id, LPCSTR name,
 		parent,
 		(HMENU)id,
 		i ? i : GetModuleHandle(nullptr),
-		NULL
+		nullptr
 	);
 }
 
 void lib::window::set_size(HWND handle, int width, int height)
 {
-	SetWindowPos(handle, NULL, 0, 0, width, height,
+	SetWindowPos(handle, nullptr, 0, 0, width, height,
 		SWP_NOZORDER|SWP_NOMOVE);
 }
 
 void lib::window::set_pos(HWND handle, int x, int y)
 {
-	SetWindowPos(handle, NULL, x, y, 0, 0,
+	SetWindowPos(handle, nullptr, x, y, 0, 0,
 		SWP_NOZORDER|SWP_NOSIZE);
 }
 
@@ -139,8 +255,12 @@ void lib::window::get_outer_size(HWND h, SIZE & s)
 
 void lib::window::get_inner_size(HWND h, SIZE & s)
 {
+	// PRINT_VAR((UINT) h, "%08x");
+
 	RECT r;
 	GetClientRect(h, &r);
-	s.cx = r.right;
-	s.cy = r.bottom;
+	// PRINT_VAR(r.right, "%ld");
+	// PRINT_VAR(r.bottom, "%ld");
+	s.cx = r.right - r.left;
+	s.cy = r.bottom - r.top;
 }

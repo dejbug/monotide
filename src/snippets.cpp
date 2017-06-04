@@ -9,11 +9,8 @@
 #include <stdio.h>
 
 void snippets::calc_text_rect_2(RECT & rc, HDC dc,
-		lib::font::EnumFontInfo & fi,
 		char const * text, size_t text_len)
 {
-	lib::font::EnumFontInfoLoader efil(dc, fi);
-
 	// TEXTMETRIC tm;
 	// GetTextMetrics(dc, &tm);
 

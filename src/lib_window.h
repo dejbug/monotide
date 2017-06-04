@@ -4,6 +4,33 @@
 namespace lib {
 namespace window {
 
+struct BackgroundDC
+{
+	enum {
+		E_OK, E_CCDC, E_CCBMP,
+	} error;
+	HDC parent;
+	HDC handle;
+	HBITMAP bmp;
+	int w, h;
+
+	BackgroundDC(HDC parent=nullptr);
+	BackgroundDC(BackgroundDC const & other) = delete;
+	BackgroundDC(BackgroundDC && other);
+	virtual ~BackgroundDC();
+
+	BackgroundDC& operator=(BackgroundDC const & other) = delete;
+	BackgroundDC& operator=(BackgroundDC && other);
+
+	void delete_bmp();
+	void delete_dc();
+	void resize(int w, int h);
+	void resize();
+	void flip();
+	void clear(UINT id);
+	void fill(COLORREF c);
+};
+
 int run_main_loop(MSG &);
 
 void init_class(WNDCLASSEX & wc);
