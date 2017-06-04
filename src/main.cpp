@@ -109,11 +109,11 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 {
 	HBRUSH const frame_brush = (HBRUSH) GetStockObject(DC_BRUSH);
-	int const margin = 8;
 	SIZE const frame_extra = {3, 2};
-
+	SIZE const padding = {8, 8};
 	SIZE client_size;
 	lib::window::get_inner_size(WindowFromDC(dc), client_size);
+	int const bottom_y = client_size.cy - padding.cy;
 
 	int y = 0;
 	// INT * char_widths = new INT[256];
@@ -123,12 +123,11 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 	{
 		char const * text = (char const *) ff[i].elfe.elfFullName;
 		size_t const text_len = strlen(text);
-		int const bottom_y = client_size.cy - margin;
 
-		RECT tr = {margin, margin + y};
-		snippets::calc_text_rect(tr, dc, ff[i], text, text_len);
+		RECT tr = {padding.cx, padding.cy + y, 0, 0};
+		snippets::calc_text_rect_1(tr, dc, ff[i], text, text_len);
 
-		int const next_y = tr.bottom - margin + frame_extra.cy + 1;
+		int const next_y = tr.bottom - padding.cy + frame_extra.cy + 1;
 
 		if (next_y > bottom_y) break;
 
@@ -136,14 +135,10 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 		SetDCBrushColor(dc, RGB(100,100,100));
 		FrameRect(dc, &tr, frame_brush);
 
-		// printf(" %3d | %s | %s | %s | %d | %s\n", i+1, ft,
-		// 	ff[i].elfe.elfLogFont.lfFaceName,
-		// 	ff[i].elfe.elfStyle,
-		// 	ff[i].elfe.elfLogFont.lfCharSet,
-		// 	ff[i].elfe.elfScript);
+		RECT rc = {padding.cx, padding.cy + y, 0, 0};
+		lib::font::draw_font_label(dc, rc, ff[i]);
 
-		RECT rc = {margin, margin + y, 0, 0};
-		snippets::draw_font_label_1(dc, rc, ff[i]);
+		// font::print_font_info(ff[i]);
 
 		y = next_y;
 	}

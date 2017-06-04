@@ -6,7 +6,9 @@
 #include "macros.h"
 #include "lib_window.h"
 
-void snippets::calc_text_rect(RECT & rc, HDC dc,
+#include <stdio.h>
+
+void snippets::calc_text_rect_2(RECT & rc, HDC dc,
 		lib::font::EnumFontInfo & fi,
 		char const * text, size_t text_len)
 {
@@ -33,7 +35,6 @@ void snippets::calc_text_rect(RECT & rc, HDC dc,
 
 	SIZE text_size;
 	GetTextExtentPoint32(dc, text, text_len, &text_size);
-
 	// text_size.cx = offsets_sum;
 
 	// RECT tr;
@@ -47,26 +48,16 @@ void snippets::calc_text_rect(RECT & rc, HDC dc,
 
 	rc.right = rc.left + text_size.cx;
 	rc.bottom = rc.top + text_size.cy;
+
+	// DrawTextEx(dc, (char *) text, text_len, (RECT *) &rc,
+	// 	DT_CALCRECT|DT_NOCLIP|DT_SINGLELINE, nullptr);
+
 }
 
-/// draw_font_label_*()
-
-/// -- These are intended to be used in the drawing logic of font selection
-/// browsers which show a font preview . The preview is just the title of
-/// the font drawn in that font .
-
-/// -- The functions' numeric suffix is to be read as version number . It
-/// reflects my difficulties with the attempt to have the function return
-/// an accurate RECT in 'rc' of the drawn text's boundary . The RECT is
-/// supposed to be used in later stages e.g. to draw a frame around the
-/// label or to position some labels side-by-side if they fit inside a row .
-
-void snippets::draw_font_label_1(HDC dc, RECT & rc,
-		lib::font::EnumFontInfo & fi)
+void snippets::calc_text_rect_1(RECT & rc, HDC dc,
+		lib::font::EnumFontInfo & fi,
+		char const * text, size_t text_len)
 {
-	char const * text = (char const *) fi.elfe.elfFullName;
-	size_t const text_len = strlen(text);
-
 	lib::font::EnumFontInfoLoader efil(dc, fi);
 
 	// TEXTMETRIC tm;
@@ -104,13 +95,19 @@ void snippets::draw_font_label_1(HDC dc, RECT & rc,
 	rc.right = rc.left + text_size.cx;
 	rc.bottom = rc.top + text_size.cy;
 
-	// ExtTextOut(dc, margin, margin + y,
-	// 	0, nullptr, text, text_len, text_offsets);
-
 	// DrawTextEx(dc, (char *) text, text_len, (RECT *) &rc,
-	// 	DT_NOCLIP|DT_SINGLELINE, nullptr);
-
-	ExtTextOut(dc, rc.left, rc.top,
-		0, nullptr, text, text_len, nullptr);
+	// 	DT_CALCRECT|DT_NOCLIP|DT_SINGLELINE, nullptr);
 
 }
+
+/// draw_font_label_*()
+
+/// -- These are intended to be used in the drawing logic of font selection
+/// browsers which show a font preview . The preview is just the title of
+/// the font drawn in that font .
+
+/// -- The functions' numeric suffix is to be read as version number . It
+/// reflects my difficulties with the attempt to have the function return
+/// an accurate RECT in 'rc' of the drawn text's boundary . The RECT is
+/// supposed to be used in later stages e.g. to draw a frame around the
+/// label or to position some labels side-by-side if they fit inside a row .

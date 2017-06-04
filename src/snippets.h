@@ -4,7 +4,7 @@
 
 namespace snippets {
 
-void draw_font_label_1(HDC, IN OUT RECT &, lib::font::EnumFontInfo &);
-void calc_text_rect(OUT RECT &, HDC, lib::font::EnumFontInfo &, char const *, size_t);
+void calc_text_rect_1(OUT RECT &, HDC, lib::font::EnumFontInfo &, char const *, size_t);
+void calc_text_rect_2(OUT RECT &, HDC, lib::font::EnumFontInfo &, char const *, size_t);
 
 }

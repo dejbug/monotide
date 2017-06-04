@@ -29,9 +29,13 @@ struct EnumFontInfoLoader
 	void detach();
 };
 
-void list_fonts(std::vector<EnumFontInfo> & out,
+void list_fonts(OUT std::vector<EnumFontInfo> &,
 		BYTE charSet=DEFAULT_CHARSET, bool onlyTrueType=false,
-		HDC hdc=nullptr, size_t maxCount=0xffffffff);
+		HDC=nullptr, size_t maxCount=0xffffffff);
+
+void print_font_info(EnumFontInfo &);
+
+void draw_font_label(HDC, RECT &, EnumFontInfo &);
 
 }
 }
