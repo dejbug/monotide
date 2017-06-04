@@ -160,11 +160,13 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff, size_t ski
 		if (next_y > bottom_y) break;
 
 		InflateRect(&tr, frame_extra.cx, frame_extra.cy);
-		SetDCBrushColor(dc, RGB(100,100,100));
+		SetDCBrushColor(dc, RGB(200,80,80));
 		FrameRect(dc, &tr, frame_brush);
 
 		RECT rc = {padding.cx, padding.cy + y, 0, 0};
 		// lib::font::draw_font_label(dc, rc, ff[i]);
+		SetBkColor(dc, RGB(10,10,10));
+		SetTextColor(dc, RGB(200,200,200));
 		ExtTextOut(dc, rc.left, rc.top,
 			0, nullptr, text, text_len, nullptr);
 
