@@ -1,18 +1,8 @@
 
-before_build:
-  - cmd: call scripts\appveyor-build-enter.bat
-
-after_build:
-  - cmd: call scripts\appveyor-build-leave.bat
-
 # The standard flow calls msbuild.exe. We need to
 # overwrite this default behavior here.
 build_script:
-  # cmd: C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin\mingw32-make.exe
-  - cmd: echo $(appveyor_repo_tag_name)
-  - cmd: echo %APPVEYOR_REPO_TAG_NAME%
-  - cmd: echo appveyor-build-%APPVEYOR_REPO_TAG%.bat
-  - cmd: call scripts\appveyor-build-run.bat
+  - cmd: call appveyor.bat
 
 # We don't need tests right now.
 test: off
@@ -24,9 +14,10 @@ artifacts:
 deploy:
   # Deploy to GitHub Releases
   - provider: GitHub
-    artifact: build
+    # push contents of deploy folder
+    artifact: deploy\*
     draft: false
     prerelease: false
     on:
       branch: master                # release from master branch only
-      appveyor_repo_tag: true       # deploy on tag push only
+      appveyor_repo_tag: true      # deploy on tag push only
