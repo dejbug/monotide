@@ -111,8 +111,8 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 	RECT cr;
 	GetClientRect(parent, &cr);
 	int y = 0;
-	INT * char_widths = new INT[256];
-	INT * text_offsets = new INT[1024];
+	// INT * char_widths = new INT[256];
+	// INT * text_offsets = new INT[1024];
 
 	for (size_t i=skip; i<ff.size(); ++i)
 	{
@@ -131,33 +131,48 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 		HFONT hf = CreateFontIndirect(&ff[i].elfe.elfLogFont);
 		HGDIOBJ old = SelectObject(dc, hf);
 
-		TEXTMETRIC tm;
-		GetTextMetrics(dc, &tm);
+		// TEXTMETRIC tm;
+		// GetTextMetrics(dc, &tm);
 
-		GetCharWidth32(dc, 0, 256-1, char_widths);
+		// GetCharWidth32(dc, 0, 256-1, char_widths);
 
-		long offsets_sum = 0;
-		for (size_t i=0; i<text_len; ++i)
-		{
-			// GetCharWidth32(dc, text[i], text[i], &text_offsets[i]);
-			// text_offsets[i] = ff[i].elfe.elfLogFont.lfWidth;
-			// text_offsets[i] = tm.tmMaxCharWidth;
-			// if (text[i] >= 0 && text[i] < 256)
-			// 	text_offsets[i] = char_widths[(unsigned char) text[i]];
-			// else
-			// 	text_offsets[i] = tm.tmMaxCharWidth;
-			text_offsets[i] = tm.tmAveCharWidth;
-			offsets_sum += text_offsets[i];
-		}
+		// long offsets_sum = 0;
+		// for (size_t i=0; i<text_len; ++i)
+		// {
+		// 	// GetCharWidth32(dc, text[i], text[i], &text_offsets[i]);
+		// 	// text_offsets[i] = ff[i].elfe.elfLogFont.lfWidth;
+		// 	// text_offsets[i] = tm.tmMaxCharWidth;
+		// 	// if (text[i] >= 0 && text[i] < 256)
+		// 	// 	text_offsets[i] = char_widths[(unsigned char) text[i]];
+		// 	// else
+		// 	// 	text_offsets[i] = tm.tmMaxCharWidth;
+		// 	text_offsets[i] = tm.tmAveCharWidth;
+		// 	offsets_sum += text_offsets[i];
+		// }
 
 		SIZE text_size;
 		GetTextExtentPoint32(dc, text, text_len, &text_size);
 		// text_size.cx = offsets_sum;
 
+		// RECT tr;
+		// int const text_height = DrawTextEx(dc, (char *) text, text_len, &tr,
+		// 	DT_CALCRECT|DT_NOCLIP|DT_SINGLELINE, nullptr);
+		// if (text_height > 0)
+		// {
+		// 	text_size.cx = tr.right - tr.left;
+		// 	text_size.cy = text_height;
+		// }
+
 		RECT const text_box_rect = RECT{margin - 1, margin + y - 1, margin + text_size.cx + 1, margin + y + text_size.cy + 1};
 
-		ExtTextOut(dc, margin, margin + y,
-			0, nullptr, text, text_len, text_offsets);
+		// ExtTextOut(dc, margin, margin + y,
+		// 	0, nullptr, text, text_len, text_offsets);
+
+		// DrawTextEx(dc, (char *) text, text_len, (RECT *) &text_box_rect,
+		// 	DT_NOCLIP|DT_SINGLELINE, nullptr);
+
+		ExtTextOut(dc, text_box_rect.left + 1, text_box_rect.top + 1,
+			0, nullptr, text, text_len, nullptr);
 
 		SelectObject(dc, old);
 		DeleteObject(hf);
@@ -166,9 +181,10 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 		SetDCBrushColor(dc, RGB(100,100,100));
 		FrameRect(dc, &text_box_rect, text_box_brush);
 
-		y += ff[i].elfe.elfLogFont.lfHeight;
+		// y += ff[i].elfe.elfLogFont.lfHeight;
+		y += text_size.cy + 1;
 	}
 
-	delete[] text_offsets;
-	delete[] char_widths;
+	// delete[] text_offsets;
+	// delete[] char_widths;
 }
