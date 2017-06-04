@@ -111,7 +111,8 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 	RECT cr;
 	GetClientRect(parent, &cr);
 	int y = 0;
-	INT * kerns = new INT[1024];
+	INT * char_widths = new INT[256];
+	INT * text_offsets = new INT[1024];
 
 	for (size_t i=skip; i<ff.size(); ++i)
 	{
@@ -133,18 +134,23 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 		TEXTMETRIC tm;
 		GetTextMetrics(dc, &tm);
 
-		// memset(kerns, 0, text_len);
+		GetCharWidth32(dc, 0, 256-1, char_widths);
+
 		long kerns_sum = 0;
 		for (size_t i=0; i<text_len; ++i)
 		{
-			// GetCharWidth32(dc, text[i], text[i], &kerns[i]);
-			// kerns[i] = ff[i].elfe.elfLogFont.lfWidth;
-			kerns[i] = tm.tmMaxCharWidth;
-			kerns_sum += kerns[i];
+			// GetCharWidth32(dc, text[i], text[i], &text_offsets[i]);
+			// text_offsets[i] = ff[i].elfe.elfLogFont.lfWidth;
+			// text_offsets[i] = tm.tmMaxCharWidth;
+			if (text[i] >= 0 && text[i] < 256)
+				text_offsets[i] = char_widths[text[i]];
+			else
+				text_offsets[i] = tm.tmMaxCharWidth;
+			kerns_sum += text_offsets[i];
 		}
 
 		ExtTextOut(dc, margin, margin + y,
-			0, nullptr, text, text_len, kerns);
+			0, nullptr, text, text_len, text_offsets);
 
 		SIZE text_size;
 		GetTextExtentPoint32(dc, text, text_len, &text_size);
@@ -161,5 +167,6 @@ void draw_fonts(HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip)
 		y += ff[i].elfe.elfLogFont.lfHeight;
 	}
 
-	delete[] kerns;
+	delete[] text_offsets;
+	delete[] char_widths;
 }
