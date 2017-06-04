@@ -1,4 +1,6 @@
 
+skip_tags: true
+
 before_build:
   - cmd: call scripts\appveyor-build-enter.bat
 
@@ -27,3 +29,8 @@ deploy:
     on:
       branch: master                # release from master branch only
       appveyor_repo_tag: true       # deploy on tag push only
+
+before_deploy:
+  - cmd: call scripts\appveyor-build-enter.bat
+  - cmd: make TARGET=release
+  - cmd: call scripts\appveyor-build-leave.bat
