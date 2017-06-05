@@ -16,7 +16,7 @@ deploy:
   - provider: GitHub
     auth_token:
       secure: GlPci9QnLJxVkwdcLb6l1v0Std1gZw7kj+9Oyg/emy5H8Npnf8w6B9yXMH/DhNq2
-    artifact: deploy\*.*
+    artifact: deploy\monotide-0.1.6.zip
     draft: false
     prerelease: true
     on:
