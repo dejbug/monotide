@@ -1,5 +1,3 @@
-# Do not build on tags
-skip_tags: true
 
 # We don't need tests right now.
 test: off
@@ -24,6 +22,3 @@ deploy:
     on:
       branch: master               # release from master branch only
       appveyor_repo_tag: true      # deploy on tag push only
-
-before_deploy:
-  - cmd: call appveyor.bat
