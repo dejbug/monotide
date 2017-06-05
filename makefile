@@ -28,7 +28,8 @@ ifeq ($(TARGET),release)
 CXXFLAGS += -O2
 CXXFLAGS += -Wl,--subsystem=windows
 else
-CXXFLAGS += -g -O
+# CXXFLAGS += -g -O
+CXXFLAGS += -g
 CXXFLAGS += -Wl,--subsystem=console
 endif
 

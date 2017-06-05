@@ -2,10 +2,10 @@
 
 # monotide
 
-not sure yet
+not sure yet - for fonts
 
 # downloads
 
-no releases yet
+see `releases` for downloads
 
 fetch the automated test builds from [appveyor](https://ci.appveyor.com/project/dejbug/monotide/build/artifacts) ( if you must )

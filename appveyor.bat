@@ -37,7 +37,7 @@ make
 ECHO -- cleaning up build folder
 DEL build\*.o
 
-GOTO :EOF
+GOTO ok
 
 
 REM REM REM REM REM REM REM REM REM REM REM REM REM REM REM REM REM REM
