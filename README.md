@@ -6,6 +6,6 @@ not sure yet - for fonts
 
 # downloads
 
-see `releases` for downloads
+see [releases](https://github.com/dejbug/monotide/releases) for downloads
 
 fetch the automated test builds from [appveyor](https://ci.appveyor.com/project/dejbug/monotide/build/artifacts) ( if you must )
