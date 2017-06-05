@@ -50,7 +50,10 @@ DEL build\*.o
 
 ECHO -- packing output to deploy
 IF NOT EXIST deploy MKDIR deploy
-7z a deploy\monotide-%APPVEYOR_REPO_TAG_NAME%.zip build\*
+PUSHD build
+7z a monotide-%APPVEYOR_REPO_TAG_NAME%.zip *
+MOVE monotide-%APPVEYOR_REPO_TAG_NAME%.zip ..\deploy
+POPD
 
 ECHO -- deleting build folder
 RMDIR /S /Q build
