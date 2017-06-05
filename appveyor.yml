@@ -14,7 +14,10 @@ artifacts:
 deploy:
   # Deploy to GitHub Releases
   - provider: GitHub
-    artifact: deploy\monotide-*.zip
+    auth_token:
+      secure: GlPci9QnLJxVkwdcLb6l1v0Std1gZw7kj+9Oyg/emy5H8Npnf8w6B9yXMH/DhNq2
+    release: monotide-$(appveyor_repo_tag_name)
+    artifact: deploy\monotide-$(appveyor_repo_tag_name).zip
     draft: false
     prerelease: false
     on:
