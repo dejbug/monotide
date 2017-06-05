@@ -11,7 +11,7 @@ SET PATH=%MINGW_BIN%;%PATH%
 
 ECHO -- renaming mingw32-make.exe in-place
 PUSHD %MINGW_BIN%
-RENAME mingw32-make.exe make.exe 
+RENAME mingw32-make.exe make.exe
 POPD
 
 ECHO -- [ ready ] for make
@@ -47,14 +47,16 @@ make TARGET=release
 
 ECHO -- cleaning up build folder
 DEL build\*.o
-ECHO monotide-%APPVEYOR_REPO_TAG_NAME%.zip > release.txt
+ECHO monotide-%APPVEYOR_REPO_TAG_NAME%.zip > build\release.txt
 REM TODO: add a "release.url" linking to the deployed GitHub release URL.
-REM ECHO [InternetShortcut] > release.url
-REM ECHO URL=%GITHUB_RELEASE_URL% >> release.url
+REM ECHO [InternetShortcut] > build\release.url
+REM ECHO URL=%GITHUB_RELEASE_URL% >> build\release.url
 
 ECHO -- packing output to deploy
 IF NOT EXIST deploy MKDIR deploy
 7z a deploy\monotide-%APPVEYOR_REPO_TAG_NAME%.zip build\*
+
+DIR deploy
 
 GOTO :EOF
 
