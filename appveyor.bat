@@ -47,18 +47,15 @@ make TARGET=release
 
 ECHO -- cleaning up build folder
 DEL build\*.o
-ECHO monotide-%APPVEYOR_REPO_TAG_NAME%.zip > build\release.txt
-REM TODO: add a "release.url" linking to the deployed GitHub release URL.
-REM ECHO [InternetShortcut] > build\release.url
-REM ECHO URL=%GITHUB_RELEASE_URL% >> build\release.url
 
 ECHO -- packing output to deploy
 IF NOT EXIST deploy MKDIR deploy
 7z a deploy\monotide-%APPVEYOR_REPO_TAG_NAME%.zip build\*
 
-DIR deploy
+ECHO -- deleting build folder
+RMDIR /S /Q build
 
-GOTO :EOF
+GOTO ok
 
 
 REM ------ 8< -------- ( snip ) ---------- 8< -------- ( snip ) -------
