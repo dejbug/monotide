@@ -1,7 +1,14 @@
+#pragma once
+#include <windows.h>
+#include <vector>
+#include "lib_worker.h"
+#include "lib_window.h"
+#include "lib_font.h"
 
+using namespace lib;
 
 struct FontRenderWorker
-		: snippets::Worker
+		: worker::Worker
 {
 	struct Job
 	{
@@ -12,11 +19,14 @@ struct FontRenderWorker
 	};
 
 	FontRenderWorker();
+
 	virtual ~FontRenderWorker();
 
 	void setup(HWND, window::BackgroundDC &,
 		std::vector<font::EnumFontInfo> &);
+
 	void queue(size_t, size_t &);
+
 	char const * get_msg() const;
 
 private:
@@ -30,3 +40,6 @@ private:
 
 	void task();
 };
+
+void draw_fonts(HWND, HDC, std::vector<font::EnumFontInfo> &,
+	size_t, size_t &);

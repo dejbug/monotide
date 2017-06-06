@@ -2,60 +2,23 @@
 #include <stdio.h>
 #include <stdexcept>
 #include <vector>
+#include "common.h"
 #include "macros.h"
 #include "snippets.h"
 #include "lib_window.h"
 #include "lib_font.h"
-#include "lib_worker.h"
+#include "app_fontrenderer.h"
 
 using namespace lib;
 
-#define WM_FR_MESSAGE_UPDATE	(WM_USER + 1)
-// #define DEBUG_FR_DELAY 1000
 
 bool const draw_while_thumb_tracking = false;
-size_t const fr_tick_delay_msec = 4000;
 
 
 LRESULT CALLBACK MainFrameProc(HWND, UINT, WPARAM, LPARAM);
 
-void draw_fonts(HWND, HDC, std::vector<font::EnumFontInfo> &,
-	size_t, size_t &);
-
 void draw_info(HDC, char const * const info_text=
 	"( use mouse-wheel to scroll )");
-
-
-struct FontRenderWorker
-		: worker::Worker
-{
-	struct Job
-	{
-		size_t index;
-		size_t & count_rendered;
-
-		Job(size_t, size_t &);
-	};
-
-	FontRenderWorker();
-	virtual ~FontRenderWorker();
-
-	void setup(HWND, window::BackgroundDC &,
-		std::vector<font::EnumFontInfo> &);
-	void queue(size_t, size_t &);
-	char const * get_msg() const;
-
-private:
-	CRITICAL_SECTION mutex;
-	HANDLE queue_event;
-	HWND hwnd = nullptr;
-	window::BackgroundDC * offscreen = nullptr;
-	std::vector<font::EnumFontInfo> * fonts;
-	std::vector<Job> jobs;
-	char const * msg = nullptr;
-
-	void task();
-};
 
 
 int WINAPI WinMain(HINSTANCE i, HINSTANCE, LPSTR, int iCmdShow)
@@ -213,10 +176,14 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 			font::list_fonts(ff, ANSI_CHARSET, true, dc);
 			ReleaseDC(h, dc);
 
-			// printf(" %d fonts found\n", ff.size());
+#ifndef NDEBUG
+			printf(" %d fonts found\n", ff.size());
+#endif
 
 			vbar.set_count(ff.size());
 
+			// TODO: Do all the setup we can as early as possible.
+			// FIXME: Move offscreen into font_renderer.
 			font_renderer.setup(h, offscreen, ff);
 			font_renderer.start();
 
@@ -263,56 +230,13 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 		case WM_DESTROY:
 			font_renderer.stop();
-			font_renderer.wait(1500);
+#ifdef FR_WAIT_AT_EXIT
+			font_renderer.wait(FR_WAIT_AT_EXIT);
+#endif
 			PostQuitMessage(0);
 			return 0;
 	}
 	return DefWindowProc(h, m, w, l);
-}
-
-void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
-		size_t skip, size_t & count_rendered)
-{
-	HBRUSH const frame_brush = (HBRUSH) GetStockObject(DC_BRUSH);
-	SIZE const frame_extra = {3, 2};
-	SIZE const padding = {8, 8};
-	SIZE client_size;
-	lib::window::get_inner_size(h, client_size);
-	SIZE const cutoff = {
-		client_size.cx - padding.cx,
-		client_size.cy - padding.cy};
-
-	count_rendered = 0;
-	int y = 0;
-
-	for (size_t i=skip; i<ff.size(); ++i, ++count_rendered)
-	{
-		char const * text = (char const *) ff[i].elfe.elfFullName;
-		size_t const text_len = strlen(text);
-
-		lib::font::EnumFontInfoLoader efil(dc, ff[i]);
-
-		RECT tr = {padding.cx, padding.cy + y, 0, 0};
-		snippets::calc_text_rect_2(tr, dc, text, text_len);
-
-		int const next_y = tr.bottom - padding.cy + frame_extra.cy + 1;
-
-		if (next_y > cutoff.cy) break;
-
-		InflateRect(&tr, frame_extra.cx, frame_extra.cy);
-		// SetDCBrushColor(dc, RGB(200,80,80));
-		SetDCBrushColor(dc, RGB(100,100,100));
-		FrameRect(dc, &tr, frame_brush);
-
-		RECT rc = {padding.cx, padding.cy + y, 0, 0};
-		// lib::font::draw_font_label(dc, rc, ff[i]);
-		// SetBkColor(dc, RGB(10,10,10));
-		// SetTextColor(dc, RGB(200,200,200));
-		ExtTextOut(dc, rc.left, rc.top,
-			0, nullptr, text, text_len, nullptr);
-
-		y = next_y;
-	}
 }
 
 void draw_info(HDC dc, char const * const info_text)
@@ -327,102 +251,3 @@ void draw_info(HDC dc, char const * const info_text)
 	lib::window::quick_draw(dc, 8, 8, info_text, info_text_len,
 		42, text_color);
 }
-
-FontRenderWorker::Job::Job(size_t index, size_t & count_rendered)
-		: index(index), count_rendered(count_rendered)
-{
-}
-
-FontRenderWorker::FontRenderWorker()
-{
-	InitializeCriticalSection(&mutex);
-	queue_event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	if (!queue_event) throw std::runtime_error("FontRenderWorker :"
-		" unable to create queue_event");
-}
-
-FontRenderWorker::~FontRenderWorker()
-{
-	CloseHandle(queue_event);
-	DeleteCriticalSection(&mutex);
-}
-
-void FontRenderWorker::task()
-{
-	static bool needs_flip = true;
-	bool skip = true;
-
-	size_t jobs_dropped = 0;
-
-	size_t index = 0;
-	size_t * count_rendered = nullptr;
-
-	printf(" [ font renderer %08x ] tick\n", (size_t) this);
-
-	EnterCriticalSection(&mutex);
-	if (!jobs.empty())
-	{
-		if (!msg || !*msg) msg = "rendering...";
-		else msg = "still rendering... ( stop scrolling! :)";
-
-#ifdef DEBUG_FR_DELAY
-		PostMessage(hwnd, WM_FR_MESSAGE_UPDATE, 0, 0);
-#endif
-
-		skip = false;
-		jobs_dropped = jobs.size() - 1;
-		index = jobs.back().index;
-		count_rendered = &jobs.back().count_rendered;
-		jobs.clear();
-	}
-	LeaveCriticalSection(&mutex);
-
-	if (skip)
-	{
-		msg = "";
-		if (needs_flip)
-		{
-			offscreen->flip();
-			needs_flip = false;
-		}
-
-		WaitForSingleObject(queue_event, fr_tick_delay_msec);
-		return;
-	}
-
-	printf(" [ jobs dropped ] %d\n", jobs_dropped);
-
-#ifdef DEBUG_FR_DELAY
-	Sleep(DEBUG_FR_DELAY);
-#endif
-
-	offscreen->clear(COLOR_MENU);
-	draw_fonts(hwnd, offscreen->handle, *fonts, index, *count_rendered);
-	// offscreen->flip();
-	needs_flip = true;
-}
-
-void FontRenderWorker::setup(HWND hwnd, window::BackgroundDC & offscreen,
-		std::vector<font::EnumFontInfo> & fonts)
-{
-	EnterCriticalSection(&mutex);
-	this->hwnd = hwnd;
-	this->offscreen = &offscreen;
-	this->fonts = &fonts;
-	LeaveCriticalSection(&mutex);
-}
-
-void FontRenderWorker::queue(size_t index, size_t & count_rendered)
-{
-	EnterCriticalSection(&mutex);
-	jobs.push_back(Job(index, count_rendered));
-	LeaveCriticalSection(&mutex);
-	SetEvent(queue_event);
-}
-
-
-char const * FontRenderWorker::get_msg() const
-{
-	return msg ? msg : "";
-}
-

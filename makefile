@@ -26,7 +26,8 @@ CXXFLAGS += -DWIN32_LEAN_AND_MEAN -DSTRICT
 
 ifeq ($(TARGET),release)
 CXXFLAGS += -O2
-CXXFLAGS += -Wl,--subsystem=windows
+# CXXFLAGS += -Wl,--subsystem=windows
+CXXFLAGS += -DNDEBUG
 else
 # CXXFLAGS += -g -O
 CXXFLAGS += -g
@@ -40,9 +41,10 @@ all: build/monotide.exe
 build: ; $(call MKDIR,build)
 
 build/monotide.exe: build/snippets.o
+build/monotide.exe: build/lib_worker.o
 build/monotide.exe: build/lib_window.o
 build/monotide.exe: build/lib_font.o
-build/monotide.exe: build/lib_worker.o
+build/monotide.exe: build/app_fontrenderer.o
 build/monotide.exe: build/main.o
 build/monotide.exe: ; $(CXX) $^ -o $@ $(CXXFLAGS)
 

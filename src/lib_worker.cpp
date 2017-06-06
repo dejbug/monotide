@@ -1,5 +1,7 @@
 #include "lib_worker.h"
+#ifndef NDEBUG
 #include <stdio.h>
+#endif
 
 namespace lib {
 namespace worker {
@@ -50,20 +52,26 @@ bool Worker::wait(DWORD msec) const
 void Worker::task()
 {
 	Sleep(1000);
+#ifndef NDEBUG
 	printf(" [ worker %08x ] tick\n", (size_t) this);
+#endif
 	running = false;
 }
 
 DWORD Worker::run()
 {
+#ifndef NDEBUG
 	printf(" [ Worker %08x ] enter\n", (size_t) this);
+#endif
 
 	while (running)
 	{
 		task();
 	}
 
+#ifndef NDEBUG
 	printf(" [ Worker %08x ] leave\n", (size_t) this);
+#endif
 
 	return 0;
 }
