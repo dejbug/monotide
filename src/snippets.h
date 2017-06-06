@@ -35,10 +35,11 @@ struct Worker
 	DWORD thread_id;
 	bool running;
 
-	Worker(bool auto_start=true);
+	Worker(bool auto_start=false);
 
 	void start();
 	void stop();
+	bool wait(DWORD msec=INFINITE) const;
 
 	virtual void task();
 	virtual DWORD run();

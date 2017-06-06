@@ -176,6 +176,9 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 			// printf(" %d fonts found\n", ff.size());
 
 			vbar.set_count(ff.size());
+
+			font_renderer.start();
+
 			return 0;
 		}
 
@@ -218,6 +221,8 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 			return 0;
 
 		case WM_DESTROY:
+			font_renderer.stop();
+			font_renderer.wait(2000);
 			PostQuitMessage(0);
 			return 0;
 	}

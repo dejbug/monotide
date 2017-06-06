@@ -192,6 +192,13 @@ void snippets::Worker::stop()
 	running = false;
 }
 
+bool snippets::Worker::wait(DWORD msec) const
+{
+	if (error) return false;
+	if (!handle) return false;
+	return WAIT_OBJECT_0 == WaitForSingleObject(handle, msec);
+}
+
 void snippets::Worker::task()
 {
 	Sleep(1000);
