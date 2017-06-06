@@ -65,6 +65,20 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 			return 0;
 		}
 
+		case WM_NCLBUTTONDOWN:
+		{
+			INT const nHittest = (INT) w;
+			// POINTS pts = MAKEPOINTS(l);
+
+			if (HTVSCROLL == nHittest)
+			{
+				offscreen.clear(0);
+				draw_info(offscreen.handle);
+				offscreen.flip();
+			}
+			break;
+		}
+
 		case WM_VSCROLL:
 		{
 			int const nScrollCode = (int) LOWORD(w);
@@ -95,11 +109,12 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 				case SB_THUMBTRACK:
 					vbar.index = nPos;
-					vbar.update();
-					InvalidateRect(h, NULL, TRUE);
+					// vbar.update();
+					// InvalidateRect(h, NULL, TRUE);
 					break;
 
 				case SB_THUMBPOSITION:
+					vbar.update();
 					InvalidateRect(h, NULL, TRUE);
 					break;
 
