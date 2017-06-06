@@ -10,17 +10,19 @@ using namespace lib;
 
 LRESULT CALLBACK MainFrameProc(HWND, UINT, WPARAM, LPARAM);
 
-int WINAPI WinMain(HINSTANCE i, HINSTANCE, LPSTR, int)
+int WINAPI WinMain(HINSTANCE i, HINSTANCE, LPSTR, int iCmdShow)
 {
 	char const * const class_name = "MAINFRAME";
 
 	window::create_class(class_name, MainFrameProc, i);
+
 	HWND frame = window::create_frame(class_name, i);
 	SetWindowText(frame, "monotide-redux");
-	window::set_size(frame, 1040, 800);
+	window::set_size(frame, 600, 800);
 	window::center_to_parent(frame);
+
+	ShowWindow(frame, iCmdShow);
 	UpdateWindow(frame);
-	ShowWindow(frame, SW_SHOW);
 
 	MSG msg;
 	window::run_main_loop(msg);
