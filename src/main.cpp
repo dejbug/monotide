@@ -112,6 +112,8 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 		{
 			short const zDelta = (short) HIWORD(w);
 
+			// printf("WM_MOUSEWHEEL %d\n", zDelta);
+
 			if (zDelta > 0 && vbar.scroll(-rows_per_scroll))
 				InvalidateRect(h, NULL, TRUE);
 
@@ -150,14 +152,22 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 			switch(w)
 			{
 				case VK_PRIOR:
-					if (vbar.scroll(-rows_per_scroll))
+				{
+					int const steps = count_rendered >= rows_per_scroll ?
+						rows_per_scroll : count_rendered;
+					if (vbar.scroll(-steps))
 						InvalidateRect(h, NULL, TRUE);
 					break;
+				}
 
 				case VK_NEXT:
-					if (vbar.scroll(+count_rendered-1))
+				{
+					int const steps = count_rendered > 1 ?
+						count_rendered-1 : count_rendered;
+					if (vbar.scroll(steps))
 						InvalidateRect(h, NULL, TRUE);
 					break;
+				}
 
 				case VK_ESCAPE:
 					SendMessage(h, WM_CLOSE, 0, 0);
