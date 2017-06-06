@@ -222,7 +222,7 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 		case WM_DESTROY:
 			font_renderer.stop();
-			font_renderer.wait(2000);
+			font_renderer.wait(500);
 			PostQuitMessage(0);
 			return 0;
 	}
