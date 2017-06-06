@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <stdio.h>
+#include <stdexcept>
 #include <vector>
 #include "macros.h"
 #include "snippets.h"
@@ -8,17 +9,39 @@
 
 using namespace lib;
 
+#define DEBUG_FR_DELAY 1000
+
+#define WM_FR_MESSAGE_UPDATE	(WM_USER + 1)
+
 bool const draw_while_thumb_tracking = false;
 
 struct FontRenderWorker
 		: snippets::Worker
 {
-	void task()
+	struct Job
 	{
-		Sleep(1000);
-		printf(" [ font renderer %08x ] tick\n", (size_t) this);
-		// running = false;
-	}
+		size_t index;
+		size_t & count_rendered;
+
+		Job(size_t, size_t &);
+	};
+
+	FontRenderWorker();
+
+	void setup(HWND, window::BackgroundDC &,
+		std::vector<font::EnumFontInfo> &);
+	void queue(size_t, size_t &);
+	char const * get_msg() const;
+
+private:
+	CRITICAL_SECTION mutex;
+	HWND hwnd = nullptr;
+	window::BackgroundDC * offscreen = nullptr;
+	std::vector<font::EnumFontInfo> * fonts;
+	std::vector<Job> jobs;
+	char const * msg = nullptr;
+
+	void task();
 };
 
 LRESULT CALLBACK MainFrameProc(HWND, UINT, WPARAM, LPARAM);
@@ -44,7 +67,8 @@ int WINAPI WinMain(HINSTANCE i, HINSTANCE, LPSTR, int iCmdShow)
 
 void draw_fonts(HWND, HDC, std::vector<font::EnumFontInfo> &,
 	size_t, size_t &);
-void draw_info(HDC);
+void draw_info(HDC, char const * const info_text=
+	"( use mouse-wheel to scroll )");
 
 LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 {
@@ -59,23 +83,46 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 	{
 		default: break;
 
+		case WM_FR_MESSAGE_UPDATE:
+		{
+			RECT client_rect;
+			GetClientRect(h, &client_rect);
+			HDC dc = GetDC(h);
+			FillRect(dc, &client_rect, (HBRUSH)COLOR_WINDOW);
+			draw_info(dc, font_renderer.get_msg());
+			ReleaseDC(h, dc);
+			return 0;
+		}
+
 		case WM_PAINT:
 		{
 			PAINTSTRUCT ps;
 			BeginPaint(h, &ps);
+
+			RECT client_rect;
+			GetClientRect(h, &client_rect);
+			FillRect(ps.hdc, &client_rect, (HBRUSH)COLOR_WINDOW);
+			PostMessage(h, WM_FR_MESSAGE_UPDATE, 0, 0);
+
 			EndPaint(h, &ps);
 
-			draw_fonts(h, offscreen.handle, ff, vbar.index, count_rendered);
-			offscreen.flip();
+			// draw_fonts(h, offscreen.handle, ff, vbar.index, count_rendered);
+			// offscreen.flip();
+			font_renderer.queue(vbar.index, count_rendered);
 
 			return 0;
 		}
 
 		case WM_ERASEBKGND:
 		{
-			offscreen.clear(0);
-			draw_info(offscreen.handle);
-			offscreen.flip();
+			InvalidateRect(h, NULL, FALSE);
+
+			// RECT client_rect;
+			// GetClientRect(h, &client_rect);
+			// HDC dc = GetDC(h);
+			// FillRect(dc, &client_rect, (HBRUSH)COLOR_WINDOW);
+			// draw_info(dc, "hi");
+			// ReleaseDC(h, dc);
 			return 0;
 		}
 
@@ -86,9 +133,9 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 			if (!draw_while_thumb_tracking && HTVSCROLL == nHittest)
 			{
-				offscreen.clear(0);
-				draw_info(offscreen.handle);
-				offscreen.flip();
+				// offscreen.clear(0);
+				// draw_info(offscreen.handle);
+				// offscreen.flip();
 			}
 			break;
 		}
@@ -177,6 +224,7 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 			vbar.set_count(ff.size());
 
+			font_renderer.setup(h, offscreen, ff);
 			font_renderer.start();
 
 			return 0;
@@ -222,14 +270,15 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 		case WM_DESTROY:
 			font_renderer.stop();
-			font_renderer.wait(500);
+			font_renderer.wait(1500);
 			PostQuitMessage(0);
 			return 0;
 	}
 	return DefWindowProc(h, m, w, l);
 }
 
-void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff, size_t skip, size_t & count_rendered)
+void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
+		size_t skip, size_t & count_rendered)
 {
 	HBRUSH const frame_brush = (HBRUSH) GetStockObject(DC_BRUSH);
 	SIZE const frame_extra = {3, 2};
@@ -287,14 +336,98 @@ void quick_draw(HDC dc, int x, int y, char const * text, size_t text_len, int te
 	DeleteObject(hf);
 }
 
-void draw_info(HDC dc)
+void draw_info(HDC dc, char const * const info_text)
 {
-	char const * const info_text = "( use mouse-wheel to scroll )";
 	size_t const info_text_len = strlen(info_text);
-	COLORREF const text_color = RGB(200,100,100);
+	// COLORREF const text_color = RGB(200,100,100);
+	COLORREF const text_color = RGB(100,100,100);
 
 	SIZE client_size;
 	lib::window::get_inner_size(WindowFromDC(dc), client_size);
 
 	quick_draw(dc, 8, 8, info_text, info_text_len, 42, text_color);
 }
+
+FontRenderWorker::Job::Job(size_t index, size_t & count_rendered)
+		: index(index), count_rendered(count_rendered)
+{
+}
+
+FontRenderWorker::FontRenderWorker()
+{
+	InitializeCriticalSection(&mutex);
+	// mutex = CreateMutex(nullptr, FALSE, nullptr);
+	// if (!mutex) throw std::runtime_error("FontRenderWorker : unable to create mutex");
+}
+
+void FontRenderWorker::task()
+{
+	bool skip = true;
+
+	size_t jobs_dropped = 0;
+
+	size_t index = 0;
+	size_t * count_rendered = nullptr;
+
+	printf(" [ font renderer %08x ] tick\n", (size_t) this);
+
+	EnterCriticalSection(&mutex);
+	if (!jobs.empty())
+	{
+		if (!msg || !*msg) msg = "rendering...";
+		else msg = "still rendering... ( stop scrolling! :)";
+		PostMessage(hwnd, WM_FR_MESSAGE_UPDATE, 0, 0);
+
+		skip = false;
+		jobs_dropped = jobs.size() - 1;
+		index = jobs.back().index;
+		count_rendered = &jobs.back().count_rendered;
+		jobs.clear();
+	}
+	LeaveCriticalSection(&mutex);
+
+	if (skip)
+	{
+		msg = "";
+
+		offscreen->flip();
+
+		Sleep(100);
+
+		return;
+	}
+
+	printf(" [ jobs dropped ] %d\n", jobs_dropped);
+
+#ifdef DEBUG_FR_DELAY
+	Sleep(DEBUG_FR_DELAY);
+#endif
+
+	offscreen->clear(0);
+	draw_fonts(hwnd, offscreen->handle, *fonts, index, *count_rendered);
+	// offscreen->flip();
+}
+
+void FontRenderWorker::setup(HWND hwnd, window::BackgroundDC & offscreen,
+		std::vector<font::EnumFontInfo> & fonts)
+{
+	EnterCriticalSection(&mutex);
+	this->hwnd = hwnd;
+	this->offscreen = &offscreen;
+	this->fonts = &fonts;
+	LeaveCriticalSection(&mutex);
+}
+
+void FontRenderWorker::queue(size_t index, size_t & count_rendered)
+{
+	EnterCriticalSection(&mutex);
+	jobs.push_back(Job(index, count_rendered));
+	LeaveCriticalSection(&mutex);
+}
+
+
+char const * FontRenderWorker::get_msg() const
+{
+	return msg ? msg : "";
+}
+
