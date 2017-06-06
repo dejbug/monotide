@@ -118,13 +118,30 @@ bool snippets::ScrollBar::scroll(int steps, bool update)
 {
 	if (count == 0) return false;
 
-	bool const can_add_1 = steps >= 0 && index + steps <= count;
-	bool const can_add_2 = steps < 0 && index > (size_t) -steps;
-
 	size_t temp = index;
 
-	if (can_add_1 || can_add_2) temp += steps;
-	else if (steps < 0 && index <= (size_t) -steps) temp = 0;
+	if (steps >= 0)
+	{
+		if (count - index <= (size_t) steps)
+		{
+			temp = count;
+		}
+		else if (index + steps <= count)
+		{
+			temp += steps;
+		}
+	}
+	else
+	{
+		if (index <= (size_t) -steps)
+		{
+			temp = 0;
+		}
+		else if (index > (size_t) -steps)
+		{
+			temp += steps;
+		}
+	}
 
 	if (temp == index) return false;
 	index = temp;
