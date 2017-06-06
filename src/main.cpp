@@ -7,14 +7,23 @@
 #include "lib_window.h"
 #include "lib_font.h"
 
-#define WM_FR_MESSAGE_UPDATE	(WM_USER + 1)
-
 using namespace lib;
 
+#define WM_FR_MESSAGE_UPDATE	(WM_USER + 1)
 // #define DEBUG_FR_DELAY 1000
 
 bool const draw_while_thumb_tracking = false;
 size_t const fr_tick_delay_msec = 4000;
+
+
+LRESULT CALLBACK MainFrameProc(HWND, UINT, WPARAM, LPARAM);
+
+void draw_fonts(HWND, HDC, std::vector<font::EnumFontInfo> &,
+	size_t, size_t &);
+
+void draw_info(HDC, char const * const info_text=
+	"( use mouse-wheel to scroll )");
+
 
 struct FontRenderWorker
 		: snippets::Worker
@@ -47,8 +56,6 @@ private:
 	void task();
 };
 
-LRESULT CALLBACK MainFrameProc(HWND, UINT, WPARAM, LPARAM);
-
 int WINAPI WinMain(HINSTANCE i, HINSTANCE, LPSTR, int iCmdShow)
 {
 	char const * const class_name = "MAINFRAME";
@@ -68,11 +75,6 @@ int WINAPI WinMain(HINSTANCE i, HINSTANCE, LPSTR, int iCmdShow)
 	return msg.wParam;
 }
 
-void draw_fonts(HWND, HDC, std::vector<font::EnumFontInfo> &,
-	size_t, size_t &);
-void draw_info(HDC, char const * const info_text=
-	"( use mouse-wheel to scroll )");
-
 LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 {
 	static std::vector<font::EnumFontInfo> ff;
@@ -88,8 +90,6 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 		case WM_FR_MESSAGE_UPDATE:
 		{
-			printf("WM_FR_MESSAGE_UPDATE\n");
-
 			RECT client_rect;
 			GetClientRect(h, &client_rect);
 			HDC dc = GetDC(h);
@@ -103,8 +103,6 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 		case WM_PAINT:
 		{
-			printf("WM_PAINT\n");
-
 			PAINTSTRUCT ps;
 			BeginPaint(h, &ps);
 
@@ -115,40 +113,22 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 			EndPaint(h, &ps);
 
-			// draw_fonts(h, offscreen.handle, ff, vbar.index, count_rendered);
-			// offscreen.flip();
 			font_renderer.queue(vbar.index, count_rendered);
 
 			return 0;
 		}
 
 		case WM_ERASEBKGND:
-		{
-			printf("WM_ERASEBKGND\n");
-			// InvalidateRect(h, NULL, FALSE);
-
-			// RECT client_rect;
-			// GetClientRect(h, &client_rect);
-			// HDC dc = GetDC(h);
-			// FillRect(dc, &client_rect, (HBRUSH)(COLOR_MENU+1));
-			// draw_info(dc, "hi");
-			// ReleaseDC(h, dc);
 			return 0;
-		}
 
 		case WM_NCLBUTTONDOWN:
 		{
 			INT const nHittest = (INT) w;
-			// POINTS pts = MAKEPOINTS(l);
+			// POINTS const pts = MAKEPOINTS(l);
 
 			if (!draw_while_thumb_tracking && HTVSCROLL == nHittest)
 			{
-				printf("WM_NCLBUTTONDOWN\n");
 				PostMessage(h, WM_FR_MESSAGE_UPDATE, 0, 0);
-
-				// offscreen.clear(COLOR_MENU);
-				// draw_info(offscreen.handle);
-				// offscreen.flip();
 			}
 			break;
 		}
@@ -182,7 +162,6 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 					break;
 
 				case SB_THUMBTRACK:
-					printf("SB_THUMBTRACK\n");
 					vbar.index = nPos;
 					if (draw_while_thumb_tracking)
 					{
@@ -192,9 +171,7 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 					break;
 
 				case SB_THUMBPOSITION:
-					printf("SB_THUMBPOSITION\n");
 					vbar.update();
-					// InvalidateRect(h, NULL, TRUE);
 					font_renderer.queue(vbar.index, count_rendered);
 					break;
 
@@ -206,8 +183,6 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 		case WM_MOUSEWHEEL:
 		{
 			short const zDelta = (short) HIWORD(w);
-
-			// printf("WM_MOUSEWHEEL %d\n", zDelta);
 
 			if (zDelta > 0 && vbar.scroll(-rows_per_scroll))
 				InvalidateRect(h, NULL, TRUE);
@@ -338,20 +313,6 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 	}
 }
 
-void quick_draw(HDC dc, int x, int y, char const * text, size_t text_len, int text_height, COLORREF text_color)
-{
-	HFONT hf = CreateFont(text_height, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_SWISS, nullptr);
-
-	SaveDC(dc);
-	SetBkMode(dc, TRANSPARENT);
-	SetTextColor(dc, text_color);
-	SelectObject(dc, hf);
-	TextOut(dc, x, y, text, text_len);
-	RestoreDC(dc, -1);
-
-	DeleteObject(hf);
-}
-
 void draw_info(HDC dc, char const * const info_text)
 {
 	size_t const info_text_len = strlen(info_text);
@@ -361,7 +322,8 @@ void draw_info(HDC dc, char const * const info_text)
 	SIZE client_size;
 	lib::window::get_inner_size(WindowFromDC(dc), client_size);
 
-	quick_draw(dc, 8, 8, info_text, info_text_len, 42, text_color);
+	lib::window::quick_draw(dc, 8, 8, info_text, info_text_len,
+		42, text_color);
 }
 
 FontRenderWorker::Job::Job(size_t index, size_t & count_rendered)

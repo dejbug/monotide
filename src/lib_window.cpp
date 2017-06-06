@@ -264,3 +264,18 @@ void lib::window::get_inner_size(HWND h, SIZE & s)
 	s.cx = r.right - r.left;
 	s.cy = r.bottom - r.top;
 }
+
+void lib::window::quick_draw(HDC dc, int x, int y, char const * text,
+		size_t text_len, int text_height, COLORREF text_color)
+{
+	HFONT hf = CreateFont(text_height, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_SWISS, nullptr);
+
+	SaveDC(dc);
+	SetBkMode(dc, TRANSPARENT);
+	SetTextColor(dc, text_color);
+	SelectObject(dc, hf);
+	TextOut(dc, x, y, text, text_len);
+	RestoreDC(dc, -1);
+
+	DeleteObject(hf);
+}
