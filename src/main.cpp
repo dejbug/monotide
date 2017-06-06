@@ -7,13 +7,13 @@
 #include "lib_window.h"
 #include "lib_font.h"
 
-using namespace lib;
-
-#define DEBUG_FR_DELAY 1000
-
 #define WM_FR_MESSAGE_UPDATE	(WM_USER + 1)
 
-bool const draw_while_thumb_tracking = false;
+using namespace lib;
+
+// #define DEBUG_FR_DELAY 1000
+
+bool const draw_while_thumb_tracking = true;
 
 struct FontRenderWorker
 		: snippets::Worker
@@ -88,8 +88,10 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 			RECT client_rect;
 			GetClientRect(h, &client_rect);
 			HDC dc = GetDC(h);
-			FillRect(dc, &client_rect, (HBRUSH)COLOR_WINDOW);
+			FillRect(dc, &client_rect, (HBRUSH)(COLOR_MENU+1));
+#ifdef DEBUG_FR_DELAY
 			draw_info(dc, font_renderer.get_msg());
+#endif
 			ReleaseDC(h, dc);
 			return 0;
 		}
@@ -101,7 +103,7 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 			RECT client_rect;
 			GetClientRect(h, &client_rect);
-			FillRect(ps.hdc, &client_rect, (HBRUSH)COLOR_WINDOW);
+			FillRect(ps.hdc, &client_rect, (HBRUSH)(COLOR_MENU+1));
 			PostMessage(h, WM_FR_MESSAGE_UPDATE, 0, 0);
 
 			EndPaint(h, &ps);
@@ -120,7 +122,7 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 			// RECT client_rect;
 			// GetClientRect(h, &client_rect);
 			// HDC dc = GetDC(h);
-			// FillRect(dc, &client_rect, (HBRUSH)COLOR_WINDOW);
+			// FillRect(dc, &client_rect, (HBRUSH)(COLOR_MENU+1));
 			// draw_info(dc, "hi");
 			// ReleaseDC(h, dc);
 			return 0;
@@ -133,7 +135,7 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 			if (!draw_while_thumb_tracking && HTVSCROLL == nHittest)
 			{
-				// offscreen.clear(0);
+				// offscreen.clear(COLOR_MENU);
 				// draw_info(offscreen.handle);
 				// offscreen.flip();
 			}
@@ -282,7 +284,7 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 {
 	HBRUSH const frame_brush = (HBRUSH) GetStockObject(DC_BRUSH);
 	SIZE const frame_extra = {3, 2};
-	SIZE const padding = {8, 64};
+	SIZE const padding = {8, 8};
 	SIZE client_size;
 	lib::window::get_inner_size(h, client_size);
 	SIZE const cutoff = {
@@ -376,7 +378,10 @@ void FontRenderWorker::task()
 	{
 		if (!msg || !*msg) msg = "rendering...";
 		else msg = "still rendering... ( stop scrolling! :)";
+
+#ifdef DEBUG_FR_DELAY
 		PostMessage(hwnd, WM_FR_MESSAGE_UPDATE, 0, 0);
+#endif
 
 		skip = false;
 		jobs_dropped = jobs.size() - 1;
@@ -389,11 +394,9 @@ void FontRenderWorker::task()
 	if (skip)
 	{
 		msg = "";
-
 		offscreen->flip();
-
+		// FIXME: Wait for event instead of busy looping.
 		Sleep(100);
-
 		return;
 	}
 
@@ -403,7 +406,7 @@ void FontRenderWorker::task()
 	Sleep(DEBUG_FR_DELAY);
 #endif
 
-	offscreen->clear(0);
+	offscreen->clear(COLOR_MENU);
 	draw_fonts(hwnd, offscreen->handle, *fonts, index, *count_rendered);
 	// offscreen->flip();
 }
