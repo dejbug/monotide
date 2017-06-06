@@ -14,6 +14,7 @@ using namespace lib;
 // #define DEBUG_FR_DELAY 1000
 
 bool const draw_while_thumb_tracking = false;
+size_t const fr_tick_delay_msec = 4000;
 
 struct FontRenderWorker
 		: snippets::Worker
@@ -27,6 +28,7 @@ struct FontRenderWorker
 	};
 
 	FontRenderWorker();
+	virtual ~FontRenderWorker();
 
 	void setup(HWND, window::BackgroundDC &,
 		std::vector<font::EnumFontInfo> &);
@@ -35,6 +37,7 @@ struct FontRenderWorker
 
 private:
 	CRITICAL_SECTION mutex;
+	HANDLE queue_event;
 	HWND hwnd = nullptr;
 	window::BackgroundDC * offscreen = nullptr;
 	std::vector<font::EnumFontInfo> * fonts;
@@ -369,8 +372,15 @@ FontRenderWorker::Job::Job(size_t index, size_t & count_rendered)
 FontRenderWorker::FontRenderWorker()
 {
 	InitializeCriticalSection(&mutex);
-	// mutex = CreateMutex(nullptr, FALSE, nullptr);
-	// if (!mutex) throw std::runtime_error("FontRenderWorker : unable to create mutex");
+	queue_event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	if (!queue_event) throw std::runtime_error("FontRenderWorker :"
+		" unable to create queue_event");
+}
+
+FontRenderWorker::~FontRenderWorker()
+{
+	CloseHandle(queue_event);
+	DeleteCriticalSection(&mutex);
 }
 
 void FontRenderWorker::task()
@@ -411,8 +421,8 @@ void FontRenderWorker::task()
 			offscreen->flip();
 			needs_flip = false;
 		}
-		// FIXME: Wait for event instead of busy looping.
-		Sleep(100);
+
+		WaitForSingleObject(queue_event, fr_tick_delay_msec);
 		return;
 	}
 
@@ -443,6 +453,7 @@ void FontRenderWorker::queue(size_t index, size_t & count_rendered)
 	EnterCriticalSection(&mutex);
 	jobs.push_back(Job(index, count_rendered));
 	LeaveCriticalSection(&mutex);
+	SetEvent(queue_event);
 }
 
 
