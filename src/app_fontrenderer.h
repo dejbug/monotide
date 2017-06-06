@@ -18,12 +18,11 @@ struct FontRenderWorker
 		Job(size_t, size_t &);
 	};
 
-	FontRenderWorker();
+	FontRenderWorker(HWND, std::vector<font::EnumFontInfo> &);
 
 	virtual ~FontRenderWorker();
 
-	void setup(HWND, window::BackgroundDC &,
-		std::vector<font::EnumFontInfo> &);
+	void on_parent_resize();
 
 	void queue(size_t, size_t &);
 
@@ -33,8 +32,8 @@ private:
 	CRITICAL_SECTION mutex;
 	HANDLE queue_event;
 	HWND hwnd = nullptr;
-	window::BackgroundDC * offscreen = nullptr;
-	std::vector<font::EnumFontInfo> * fonts;
+	window::BackgroundDC offscreen;
+	std::vector<font::EnumFontInfo> & fonts;
 	std::vector<Job> jobs;
 	char const * msg = nullptr;
 

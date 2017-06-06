@@ -13,7 +13,9 @@ FontRenderWorker::Job::Job(size_t index, size_t & count_rendered)
 }
 
 
-FontRenderWorker::FontRenderWorker()
+FontRenderWorker::FontRenderWorker(HWND h,
+		std::vector<font::EnumFontInfo> & ff)
+		: hwnd(h), fonts(ff)
 {
 	InitializeCriticalSection(&mutex);
 	queue_event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -68,7 +70,7 @@ void FontRenderWorker::task()
 		msg = "";
 		if (needs_flip)
 		{
-			offscreen->flip();
+			offscreen.flip();
 			needs_flip = false;
 		}
 
@@ -88,20 +90,17 @@ void FontRenderWorker::task()
 	Sleep(FR_DEBUG_SLOW_DRAW);
 #endif
 
-	offscreen->clear(COLOR_MENU);
-	draw_fonts(hwnd, offscreen->handle, *fonts, index, *count_rendered);
-	// offscreen->flip();
+	offscreen.clear(COLOR_MENU);
+	draw_fonts(hwnd, offscreen.handle, fonts, index, *count_rendered);
+	// offscreen.flip();
 	needs_flip = true;
 }
 
-void FontRenderWorker::setup(HWND hwnd, window::BackgroundDC & offscreen,
-		std::vector<font::EnumFontInfo> & fonts)
+void FontRenderWorker::on_parent_resize()
 {
-	EnterCriticalSection(&mutex);
-	this->hwnd = hwnd;
-	this->offscreen = &offscreen;
-	this->fonts = &fonts;
-	LeaveCriticalSection(&mutex);
+	HDC hdc = GetDC(hwnd);
+	offscreen = window::BackgroundDC(hdc);
+	ReleaseDC(hwnd, hdc);
 }
 
 void FontRenderWorker::queue(size_t index, size_t & count_rendered)

@@ -44,10 +44,9 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 {
 	static std::vector<font::EnumFontInfo> ff;
 	static UINT rows_per_scroll = 1;
-	static window::BackgroundDC offscreen;
 	static snippets::ScrollBar vbar(h, SB_VERT);
 	static size_t count_rendered = 0;
-	static FontRenderWorker font_renderer;
+	static FontRenderWorker font_renderer(h, ff);
 
 	switch(m)
 	{
@@ -160,9 +159,7 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 		case WM_SIZE:
 		{
-			HDC dc = GetDC(h);
-			offscreen = window::BackgroundDC(dc);
-			ReleaseDC(h, dc);
+			font_renderer.on_parent_resize();
 			InvalidateRect(h, NULL, TRUE);
 			return 0;
 		}
@@ -184,7 +181,7 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 			// TODO: Do all the setup we can as early as possible.
 			// FIXME: Move offscreen into font_renderer.
-			font_renderer.setup(h, offscreen, ff);
+			// font_renderer.setup(h, ff);
 			font_renderer.start();
 
 			return 0;
