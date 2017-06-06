@@ -13,7 +13,7 @@ using namespace lib;
 
 // #define DEBUG_FR_DELAY 1000
 
-bool const draw_while_thumb_tracking = true;
+bool const draw_while_thumb_tracking = false;
 
 struct FontRenderWorker
 		: snippets::Worker
@@ -85,6 +85,8 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 		case WM_FR_MESSAGE_UPDATE:
 		{
+			printf("WM_FR_MESSAGE_UPDATE\n");
+
 			RECT client_rect;
 			GetClientRect(h, &client_rect);
 			HDC dc = GetDC(h);
@@ -98,13 +100,15 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 		case WM_PAINT:
 		{
+			printf("WM_PAINT\n");
+
 			PAINTSTRUCT ps;
 			BeginPaint(h, &ps);
 
 			RECT client_rect;
 			GetClientRect(h, &client_rect);
 			FillRect(ps.hdc, &client_rect, (HBRUSH)(COLOR_MENU+1));
-			PostMessage(h, WM_FR_MESSAGE_UPDATE, 0, 0);
+			// PostMessage(h, WM_FR_MESSAGE_UPDATE, 0, 0);
 
 			EndPaint(h, &ps);
 
@@ -117,7 +121,8 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 		case WM_ERASEBKGND:
 		{
-			InvalidateRect(h, NULL, FALSE);
+			printf("WM_ERASEBKGND\n");
+			// InvalidateRect(h, NULL, FALSE);
 
 			// RECT client_rect;
 			// GetClientRect(h, &client_rect);
@@ -135,6 +140,9 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 			if (!draw_while_thumb_tracking && HTVSCROLL == nHittest)
 			{
+				printf("WM_NCLBUTTONDOWN\n");
+				PostMessage(h, WM_FR_MESSAGE_UPDATE, 0, 0);
+
 				// offscreen.clear(COLOR_MENU);
 				// draw_info(offscreen.handle);
 				// offscreen.flip();
@@ -171,17 +179,20 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 					break;
 
 				case SB_THUMBTRACK:
+					printf("SB_THUMBTRACK\n");
 					vbar.index = nPos;
 					if (draw_while_thumb_tracking)
 					{
 						vbar.update();
-						InvalidateRect(h, NULL, TRUE);
+						font_renderer.queue(vbar.index, count_rendered);
 					}
 					break;
 
 				case SB_THUMBPOSITION:
+					printf("SB_THUMBPOSITION\n");
 					vbar.update();
-					InvalidateRect(h, NULL, TRUE);
+					// InvalidateRect(h, NULL, TRUE);
+					font_renderer.queue(vbar.index, count_rendered);
 					break;
 
 			}
@@ -364,6 +375,7 @@ FontRenderWorker::FontRenderWorker()
 
 void FontRenderWorker::task()
 {
+	static bool needs_flip = true;
 	bool skip = true;
 
 	size_t jobs_dropped = 0;
@@ -394,7 +406,11 @@ void FontRenderWorker::task()
 	if (skip)
 	{
 		msg = "";
-		offscreen->flip();
+		if (needs_flip)
+		{
+			offscreen->flip();
+			needs_flip = false;
+		}
 		// FIXME: Wait for event instead of busy looping.
 		Sleep(100);
 		return;
@@ -409,6 +425,7 @@ void FontRenderWorker::task()
 	offscreen->clear(COLOR_MENU);
 	draw_fonts(hwnd, offscreen->handle, *fonts, index, *count_rendered);
 	// offscreen->flip();
+	needs_flip = true;
 }
 
 void FontRenderWorker::setup(HWND hwnd, window::BackgroundDC & offscreen,
