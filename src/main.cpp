@@ -6,6 +6,7 @@
 #include "snippets.h"
 #include "lib_window.h"
 #include "lib_font.h"
+#include "lib_worker.h"
 
 using namespace lib;
 
@@ -26,7 +27,7 @@ void draw_info(HDC, char const * const info_text=
 
 
 struct FontRenderWorker
-		: snippets::Worker
+		: worker::Worker
 {
 	struct Job
 	{
@@ -55,6 +56,7 @@ private:
 
 	void task();
 };
+
 
 int WINAPI WinMain(HINSTANCE i, HINSTANCE, LPSTR, int iCmdShow)
 {
