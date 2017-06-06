@@ -6,9 +6,20 @@
 #include "lib_window.h"
 #include "lib_font.h"
 
+using namespace lib;
+
 bool const draw_while_thumb_tracking = false;
 
-using namespace lib;
+struct FontRenderWorker
+		: snippets::Worker
+{
+	void task()
+	{
+		Sleep(1000);
+		printf(" [ font renderer %08x ] tick\n", (size_t) this);
+		// running = false;
+	}
+};
 
 LRESULT CALLBACK MainFrameProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -42,6 +53,7 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 	static window::BackgroundDC offscreen;
 	static snippets::ScrollBar vbar(h, SB_VERT);
 	static size_t count_rendered = 0;
+	static FontRenderWorker font_renderer;
 
 	switch(m)
 	{

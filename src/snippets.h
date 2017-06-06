@@ -24,4 +24,27 @@ private:
 	int bar_id;
 };
 
+
+struct Worker
+{
+	enum {
+		E_OK, E_CREATE, E_NO_RESTART, E_RESUME,
+	} error;
+
+	HANDLE handle;
+	DWORD thread_id;
+	bool running;
+
+	Worker(bool auto_start=true);
+
+	void start();
+	void stop();
+
+	virtual void task();
+	virtual DWORD run();
+
+private:
+	static DWORD WINAPI main(LPVOID);
+};
+
 }
