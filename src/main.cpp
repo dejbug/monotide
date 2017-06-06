@@ -6,6 +6,8 @@
 #include "lib_window.h"
 #include "lib_font.h"
 
+bool const draw_while_thumb_tracking = false;
+
 using namespace lib;
 
 LRESULT CALLBACK MainFrameProc(HWND, UINT, WPARAM, LPARAM);
@@ -70,7 +72,7 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 			INT const nHittest = (INT) w;
 			// POINTS pts = MAKEPOINTS(l);
 
-			if (HTVSCROLL == nHittest)
+			if (!draw_while_thumb_tracking && HTVSCROLL == nHittest)
 			{
 				offscreen.clear(0);
 				draw_info(offscreen.handle);
@@ -109,8 +111,11 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 				case SB_THUMBTRACK:
 					vbar.index = nPos;
-					// vbar.update();
-					// InvalidateRect(h, NULL, TRUE);
+					if (draw_while_thumb_tracking)
+					{
+						vbar.update();
+						InvalidateRect(h, NULL, TRUE);
+					}
 					break;
 
 				case SB_THUMBPOSITION:
