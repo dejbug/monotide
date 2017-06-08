@@ -4,6 +4,7 @@
 #include <stdio.h>
 #endif
 #include "common.h"
+#include "macros.h"
 #include "snippets.h"
 
 
@@ -117,35 +118,38 @@ char const * FontRenderWorker::get_msg() const
 	return msg ? msg : "";
 }
 
-void draw_frame(HDC dc, RECT & rc, SIZE const & frame_extra,
+void draw_frame(HDC dc, RECT & text_rc, SIZE const & frame_padding,
 		COLORREF color=0, bool rc_adjust=false)
 {
 	HBRUSH const frame_brush = (HBRUSH) GetStockObject(DC_BRUSH);
-	InflateRect(&rc, frame_extra.cx, frame_extra.cy);
+	InflateRect(&text_rc, frame_padding.cx, frame_padding.cy);
 	SetDCBrushColor(dc, color);
-	FrameRect(dc, &rc, frame_brush);
+	FrameRect(dc, &text_rc, frame_brush);
 	if (!rc_adjust)
-		InflateRect(&rc, -frame_extra.cx, -frame_extra.cy);
+		InflateRect(&text_rc, -frame_padding.cx, -frame_padding.cy);
 }
+
+
+
 
 void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 		size_t skip, size_t & count_rendered)
 {
 	snippets::RowIndexDrawer rid;
 
-	SIZE const frame_extra = {2 , 2};
-	SIZE const padding = {8, 8};
+	SIZE const frame_padding = {2 , 2};
+	SIZE const client_padding = {8, 8};
 	SIZE client_size;
 	lib::window::get_inner_size(h, client_size);
 	SIZE const cutoff = {
-		client_size.cx - padding.cx,
-		client_size.cy - padding.cy};
-	int const gap_row = 0;
-	int const gap_prefix = 16;
-	int const min_step_y = rid.get_height(1.5f);
+		client_size.cx - client_padding.cx,
+		client_size.cy - client_padding.cy};
+	int const row_spacing = 0;
+	int const col_spacing = 16;
+	int const min_row_height = rid.get_height(1.5f);
 
 	count_rendered = 0;
-	int y = padding.cy;
+	int y = client_padding.cy;
 
 	for (size_t i=skip; i<ff.size(); ++i, ++count_rendered)
 	{
@@ -154,30 +158,42 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 
 		lib::font::EnumFontInfoLoader efil(dc, ff[i]);
 
-		RECT rc = {padding.cx, y, 0, 0};
-		snippets::calc_text_rect_2(rc, dc, text, text_len);
+		RECT text_rc = {client_padding.cx, y, 0, 0};
+		snippets::calc_text_rect_2(text_rc, dc, text, text_len);
 
-		int const next_row_height = (rc.bottom - rc.top)
-			+ frame_extra.cy * 2;
-		int const step_y = next_row_height - 1;
-		int const step_y_true = step_y > min_step_y ? step_y : min_step_y;
-		int const next_y = y + step_y_true + gap_row;
+		int const text_height = text_rc.bottom - text_rc.top;
+		int const next_row_height = text_height + frame_padding.cy * 2;
+		int const next_row_height_true = next_row_height > min_row_height ?
+			next_row_height : min_row_height;
+		int const next_row_height_collapsed = next_row_height_true - 1;
+		int const next_y = y + next_row_height_collapsed + row_spacing;
 
 		if (next_y > cutoff.cy) break;
 
-		int const oc = (next_row_height - rid.get_height()) >> 1;
+		int const index_offset_y =
+			(next_row_height_true - rid.get_height()) / 2;
+		int const text_offset_y =
+			next_row_height_true > min_row_height ? 0 :
+				(min_row_height - next_row_height_true) / 2;
 
-		RECT tr = {padding.cx, y + oc, 0, 0};
-		rid.draw(dc, tr, i+1, "%4d");
+		RECT prefix_rc = {client_padding.cx, y + index_offset_y, 0, 0};
+		rid.draw(dc, prefix_rc, i+1, "%4d");
 
-		int const offset = tr.right + gap_prefix;
-		OffsetRect(&rc, offset, 0);
+		int const off_text_x = prefix_rc.right + col_spacing;
+		OffsetRect(&text_rc, off_text_x, text_offset_y);
+
+		int const y_line = y + int(next_row_height_true / 2.0f);
+		MoveToEx(dc, prefix_rc.right, y_line, nullptr);
+		LineTo(dc, text_rc.left - frame_padding.cx, y_line);
 
 		// SetBkColor(dc, RGB(10,10,10));
 		// SetTextColor(dc, RGB(200,200,200));
 
-		TextOut(dc, rc.left, rc.top, text, text_len);
-		draw_frame(dc, rc, frame_extra, RGB(100,100,100));
+		TextOut(dc, text_rc.left, text_rc.top, text, text_len);
+		draw_frame(dc, text_rc, frame_padding, RGB(100,100,100));
+
+		MoveToEx(dc, text_rc.left - 4, text_rc.top, nullptr);
+		LineTo(dc, text_rc.left - 4, text_rc.bottom);
 
 		y = next_y;
 	}
