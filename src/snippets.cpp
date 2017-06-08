@@ -107,7 +107,6 @@ void snippets::RowIndexDrawer::set_digits(unsigned count)
 {
 	_snprintf(format, sizeof(format),
 		count >= 2 ? "%%%dd" : "%%d", count);
-	// PRINT_VAR(format, "%s");
 }
 
 void snippets::RowIndexDrawer::set_digits_from_max_index(size_t index)

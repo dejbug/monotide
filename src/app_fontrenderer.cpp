@@ -192,14 +192,14 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 			text_height > min_row_height ? 0 :
 				(min_row_height - text_height) / 2;
 
-		PRINT_VAR(index_offset_y, "%d");
-		PRINT_VAR(text_offset_y, "%d");
-
 		RECT prefix_rc = {client_padding.cx, y + index_offset_y, 0, 0};
 		rid.draw(dc, prefix_rc, i+1);
 
 		int const off_text_x = prefix_rc.right + col_spacing;
 		OffsetRect(&text_rc, off_text_x, text_offset_y);
+
+		SelectObject(dc, GetStockObject(DC_PEN));
+		SetDCPenColor(dc, RGB(100,100,100));
 
 		int const y_line = y + int(row_height / 2.0f);
 		MoveToEx(dc, prefix_rc.right, y_line, nullptr);
@@ -210,6 +210,9 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 
 		TextOut(dc, text_rc.left, text_rc.top, text, text_len);
 		draw_frame(dc, text_rc, frame_padding, RGB(100,100,100));
+
+		// SelectObject(dc, GetStockObject(DC_PEN));
+		// SetDCPenColor(dc, RGB(100,100,100));
 
 		MoveToEx(dc, text_rc.left - 4, text_rc.top, nullptr);
 		LineTo(dc, text_rc.left - 4, text_rc.bottom);
