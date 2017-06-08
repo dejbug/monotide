@@ -133,20 +133,30 @@ void draw_frame(HDC dc, RECT & text_rc, SIZE const & frame_padding,
 
 
 void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
-		size_t skip, size_t & count_rendered)
+		size_t skip, OUT size_t & count_rendered)
 {
 	snippets::RowIndexDrawer rid;
 
-	SIZE const frame_padding = {2 , 2};
+	/// A row, at least, must accomodate the index (comfortably) .
+	/// The index is the row's "line number" drawn in column #0 .
+	int const min_row_height = rid.get_height(1.5f);
+
+	/// The extra space between columns and rows .
+	int const row_spacing = 0;
+	int const col_spacing = 16;
+
+	/// Extra space between frames and contents .
 	SIZE const client_padding = {8, 8};
+	SIZE const frame_padding = {2 , 2};
+
 	SIZE client_size;
 	lib::window::get_inner_size(h, client_size);
+
+	/// The rightmost, bottommost points after which nothing
+	/// SHOULD be drawn.
 	SIZE const cutoff = {
 		client_size.cx - client_padding.cx,
 		client_size.cy - client_padding.cy};
-	int const row_spacing = 0;
-	int const col_spacing = 16;
-	int const min_row_height = rid.get_height(1.5f);
 
 	count_rendered = 0;
 	int y = client_padding.cy;
@@ -156,11 +166,14 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 		char const * text = (char const *) ff[i].elfe.elfFullName;
 		size_t const text_len = strlen(text);
 
+		/// Select this font into the device context, so we can
+		/// measure it, etc. .
 		lib::font::EnumFontInfoLoader efil(dc, ff[i]);
 
 		RECT text_rc = {client_padding.cx, y, 0, 0};
 		snippets::calc_text_rect_2(text_rc, dc, text, text_len);
 
+		/// Calculate the layout .
 		int const text_height = text_rc.bottom - text_rc.top;
 		int const next_row_height = text_height + frame_padding.cy * 2;
 		int const next_row_height_true = next_row_height > min_row_height ?
@@ -168,6 +181,7 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 		int const next_row_height_collapsed = next_row_height_true - 1;
 		int const next_y = y + next_row_height_collapsed + row_spacing;
 
+		/// Is there room to draw this item or are we done ?
 		if (next_y > cutoff.cy) break;
 
 		int const index_offset_y =
