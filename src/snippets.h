@@ -27,11 +27,14 @@ private:
 struct RowIndexDrawer
 {
 	TEXTMETRIC tm;
+	char format[8];
 	char buffer[32];
 
 	RowIndexDrawer();
 	int get_height(float scale=1.0) const;
-	void draw(HDC, RECT &, int index, char const * format="%d");
+	void set_digits(unsigned count);
+	void set_digits_from_max_index(size_t index);
+	void draw(HDC, RECT &, int index, char const * format=nullptr);
 };
 
 void text_draw_1(HDC, RECT &, char const * text, size_t text_len);

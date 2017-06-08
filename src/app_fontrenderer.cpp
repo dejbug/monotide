@@ -1,7 +1,7 @@
 #include "app_fontrenderer.h"
 #include <stdexcept>
 #ifndef NDEBUG
-#include <stdio.h>
+	#include <stdio.h>
 #endif
 #include "common.h"
 #include "macros.h"
@@ -136,6 +136,7 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 		size_t skip, OUT size_t & count_rendered)
 {
 	snippets::RowIndexDrawer rid;
+	rid.set_digits_from_max_index(ff.size());
 
 	/// A row, at least, must accomodate the index (comfortably) .
 	/// The index is the row's "line number" drawn in column #0 .
@@ -191,7 +192,7 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 				(min_row_height - next_row_height_true) / 2;
 
 		RECT prefix_rc = {client_padding.cx, y + index_offset_y, 0, 0};
-		rid.draw(dc, prefix_rc, i+1, "%4d");
+		rid.draw(dc, prefix_rc, i+1);
 
 		int const off_text_x = prefix_rc.right + col_spacing;
 		OffsetRect(&text_rc, off_text_x, text_offset_y);

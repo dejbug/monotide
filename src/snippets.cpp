@@ -7,6 +7,7 @@
 #include "lib_window.h"
 
 #include <stdio.h>
+#include <math.h>
 
 void snippets::calc_text_rect_2(RECT & rc, HDC dc,
 		char const * text, size_t text_len)
@@ -89,6 +90,7 @@ void snippets::ScrollBar::update()
 }
 
 snippets::RowIndexDrawer::RowIndexDrawer()
+		: format{"%3d"}, buffer{0}
 {
 	HDC dc = GetDC(nullptr);
 	SelectObject(dc, GetStockObject(ANSI_FIXED_FONT));
@@ -101,10 +103,22 @@ int snippets::RowIndexDrawer::get_height(float scale) const
 	return int(tm.tmHeight * scale);
 }
 
+void snippets::RowIndexDrawer::set_digits(unsigned count)
+{
+	_snprintf(format, sizeof(format),
+		count >= 2 ? "%%%dd" : "%%d", count);
+	// PRINT_VAR(format, "%s");
+}
+
+void snippets::RowIndexDrawer::set_digits_from_max_index(size_t index)
+{
+	set_digits(floor(log10(index ? index : 1) + 1));
+}
+
 void snippets::RowIndexDrawer::draw(HDC dc, RECT & rc,
 		int index, char const * format)
 {
-	if (!format || !*format) format = "%d";
+	if (!format || !*format) format = this->format;
 	_snprintf(buffer, sizeof(buffer), format, index);
 
 	SetBkMode(dc, TRANSPARENT);
