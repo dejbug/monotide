@@ -133,7 +133,7 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 {
 	snippets::RowIndexDrawer rid;
 
-	SIZE const frame_extra = {3, 2};
+	SIZE const frame_extra = {2 , 2};
 	SIZE const padding = {8, 8};
 	SIZE client_size;
 	lib::window::get_inner_size(h, client_size);
