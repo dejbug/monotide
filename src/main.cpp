@@ -13,6 +13,7 @@ using namespace lib;
 
 
 bool const draw_while_thumb_tracking = false;
+bool const only_TTF = false;
 
 
 LRESULT CALLBACK MainFrameProc(HWND, UINT, WPARAM, LPARAM);
@@ -170,7 +171,7 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 				0, &rows_per_scroll, 0);
 
 			HDC dc = GetDC(h);
-			font::list_fonts(ff, ANSI_CHARSET, true, dc);
+			font::list_fonts(ff, ANSI_CHARSET, only_TTF, dc);
 			ReleaseDC(h, dc);
 
 #ifndef NDEBUG

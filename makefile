@@ -26,7 +26,7 @@ CXXFLAGS += -DWIN32_LEAN_AND_MEAN -DSTRICT
 
 ifeq ($(TARGET),release)
 CXXFLAGS += -O2
-# CXXFLAGS += -Wl,--subsystem=windows
+CXXFLAGS += -Wl,--subsystem=windows
 CXXFLAGS += -DNDEBUG
 else
 # CXXFLAGS += -g -O

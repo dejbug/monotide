@@ -8,3 +8,4 @@
 // #define FR_WAIT_AT_EXIT			1000
 
 extern bool const draw_while_thumb_tracking;
+extern bool const only_TTF;

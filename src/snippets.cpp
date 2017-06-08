@@ -11,44 +11,10 @@
 void snippets::calc_text_rect_2(RECT & rc, HDC dc,
 		char const * text, size_t text_len)
 {
-	// TEXTMETRIC tm;
-	// GetTextMetrics(dc, &tm);
-
-	// GetCharWidth32(dc, 0, 256-1, char_widths);
-
-	// long offsets_sum = 0;
-	// for (size_t i=0; i<text_len; ++i)
-	// {
-	// 	// GetCharWidth32(dc, text[i], text[i], &text_offsets[i]);
-	// 	// text_offsets[i] = fi.elfe.elfLogFont.lfWidth;
-	// 	// text_offsets[i] = tm.tmMaxCharWidth;
-	// 	// if (text[i] >= 0 && text[i] < 256)
-	// 	// 	text_offsets[i] = char_widths[(unsigned char) text[i]];
-	// 	// else
-	// 	// 	text_offsets[i] = tm.tmMaxCharWidth;
-	// 	text_offsets[i] = tm.tmAveCharWidth;
-	// 	offsets_sum += text_offsets[i];
-	// }
-
 	SIZE text_size;
 	GetTextExtentPoint32(dc, text, text_len, &text_size);
-	// text_size.cx = offsets_sum;
-
-	// RECT tr;
-	// int const text_height = DrawTextEx(dc, (char *) text, text_len, &tr,
-	// 	DT_CALCRECT|DT_NOCLIP|DT_SINGLELINE, nullptr);
-	// if (text_height > 0)
-	// {
-	// 	text_size.cx = tr.right - tr.left;
-	// 	text_size.cy = text_height;
-	// }
-
 	rc.right = rc.left + text_size.cx;
 	rc.bottom = rc.top + text_size.cy;
-
-	// DrawTextEx(dc, (char *) text, text_len, (RECT *) &rc,
-	// 	DT_CALCRECT|DT_NOCLIP|DT_SINGLELINE, nullptr);
-
 }
 
 void snippets::calc_text_rect_1(RECT & rc, HDC dc,
@@ -57,44 +23,10 @@ void snippets::calc_text_rect_1(RECT & rc, HDC dc,
 {
 	lib::font::EnumFontInfoLoader efil(dc, fi);
 
-	// TEXTMETRIC tm;
-	// GetTextMetrics(dc, &tm);
-
-	// GetCharWidth32(dc, 0, 256-1, char_widths);
-
-	// long offsets_sum = 0;
-	// for (size_t i=0; i<text_len; ++i)
-	// {
-	// 	// GetCharWidth32(dc, text[i], text[i], &text_offsets[i]);
-	// 	// text_offsets[i] = fi.elfe.elfLogFont.lfWidth;
-	// 	// text_offsets[i] = tm.tmMaxCharWidth;
-	// 	// if (text[i] >= 0 && text[i] < 256)
-	// 	// 	text_offsets[i] = char_widths[(unsigned char) text[i]];
-	// 	// else
-	// 	// 	text_offsets[i] = tm.tmMaxCharWidth;
-	// 	text_offsets[i] = tm.tmAveCharWidth;
-	// 	offsets_sum += text_offsets[i];
-	// }
-
 	SIZE text_size;
 	GetTextExtentPoint32(dc, text, text_len, &text_size);
-	// text_size.cx = offsets_sum;
-
-	// RECT tr;
-	// int const text_height = DrawTextEx(dc, (char *) text, text_len, &tr,
-	// 	DT_CALCRECT|DT_NOCLIP|DT_SINGLELINE, nullptr);
-	// if (text_height > 0)
-	// {
-	// 	text_size.cx = tr.right - tr.left;
-	// 	text_size.cy = text_height;
-	// }
-
 	rc.right = rc.left + text_size.cx;
 	rc.bottom = rc.top + text_size.cy;
-
-	// DrawTextEx(dc, (char *) text, text_len, (RECT *) &rc,
-	// 	DT_CALCRECT|DT_NOCLIP|DT_SINGLELINE, nullptr);
-
 }
 
 snippets::ScrollBar::ScrollBar(HWND h, int nBar)
@@ -154,4 +86,30 @@ bool snippets::ScrollBar::scroll(int steps, bool update)
 void snippets::ScrollBar::update()
 {
 	SetScrollPos(parent, bar_id, index, TRUE);
+}
+
+void snippets::text_draw_1(HDC dc, RECT & rc,
+		char const * text, size_t text_len)
+{
+	RECT tr = {rc.left, rc.top, 0, 0};
+	calc_text_rect_2(tr, dc, text, text_len);
+
+	UINT const ta_old = SetTextAlign(dc, TA_UPDATECP);
+
+	MoveToEx(dc, rc.left, rc.top, nullptr);
+	ExtTextOut(dc, rc.left, rc.top,
+		0, nullptr, text, text_len, nullptr);
+
+	MoveToEx(dc, rc.left, rc.top, (LPPOINT) &rc.right);
+	rc.bottom = tr.bottom;
+
+	if (GDI_ERROR != ta_old)
+		SetTextAlign(dc, ta_old);
+}
+
+void snippets::text_draw_2(HDC dc, RECT & rc,
+		char const * text, size_t text_len)
+{
+	calc_text_rect_2(rc, dc, text, text_len);
+	TextOut(dc, rc.left, rc.top, text, text_len);
 }
