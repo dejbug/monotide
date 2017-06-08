@@ -165,7 +165,9 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 
 		if (next_y > cutoff.cy) break;
 
-		RECT tr = {padding.cx, y, 0, 0};
+		int const oc = (next_row_height - rid.get_height()) >> 1;
+
+		RECT tr = {padding.cx, y + oc, 0, 0};
 		rid.draw(dc, tr, i+1, "%4d");
 
 		int const offset = tr.right + gap_prefix;
