@@ -189,8 +189,11 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 		int const index_offset_y =
 			(row_height - rid.get_height()) / 2;
 		int const text_offset_y =
-			row_height > min_row_height ? 0 :
-				(min_row_height - row_height) / 2;
+			text_height > min_row_height ? 0 :
+				(min_row_height - text_height) / 2;
+
+		PRINT_VAR(index_offset_y, "%d");
+		PRINT_VAR(text_offset_y, "%d");
 
 		RECT prefix_rc = {client_padding.cx, y + index_offset_y, 0, 0};
 		rid.draw(dc, prefix_rc, i+1);
