@@ -24,6 +24,16 @@ private:
 	int bar_id;
 };
 
+struct RowIndexDrawer
+{
+	TEXTMETRIC tm;
+	char buffer[32];
+
+	RowIndexDrawer();
+	int get_height(float scale=1.0) const;
+	void draw(HDC, RECT &, int index, char const * format="%d");
+};
+
 void text_draw_1(HDC, RECT &, char const * text, size_t text_len);
 void text_draw_2(HDC, RECT &, char const * text, size_t text_len);
 

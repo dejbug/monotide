@@ -88,6 +88,32 @@ void snippets::ScrollBar::update()
 	SetScrollPos(parent, bar_id, index, TRUE);
 }
 
+snippets::RowIndexDrawer::RowIndexDrawer()
+{
+	HDC dc = GetDC(nullptr);
+	SelectObject(dc, GetStockObject(ANSI_FIXED_FONT));
+	GetTextMetrics(dc, &tm);
+	ReleaseDC(nullptr, dc);
+}
+
+int snippets::RowIndexDrawer::get_height(float scale) const
+{
+	return int(tm.tmHeight * scale);
+}
+
+void snippets::RowIndexDrawer::draw(HDC dc, RECT & rc,
+		int index, char const * format)
+{
+	if (!format || !*format) format = "%d";
+	_snprintf(buffer, sizeof(buffer), format, index);
+
+	SetBkMode(dc, TRANSPARENT);
+	HGDIOBJ old_font = SelectObject(dc, GetStockObject(ANSI_FIXED_FONT));
+	text_draw_2(dc, rc, buffer, strlen(buffer));
+	SelectObject(dc, old_font);
+	SetBkMode(dc, OPAQUE);
+}
+
 void snippets::text_draw_1(HDC dc, RECT & rc,
 		char const * text, size_t text_len)
 {

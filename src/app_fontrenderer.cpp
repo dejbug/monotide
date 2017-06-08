@@ -131,9 +131,7 @@ void draw_frame(HDC dc, RECT & rc, SIZE const & frame_extra,
 void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 		size_t skip, size_t & count_rendered)
 {
-	TEXTMETRIC tm;
-	SelectObject(dc, GetStockObject(ANSI_FIXED_FONT));
-	GetTextMetrics(dc, &tm);
+	snippets::RowIndexDrawer rid;
 
 	SIZE const frame_extra = {3, 2};
 	SIZE const padding = {8, 8};
@@ -142,13 +140,12 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 	SIZE const cutoff = {
 		client_size.cx - padding.cx,
 		client_size.cy - padding.cy};
-	int const prefix_gap = 16;
-	int const min_step_y = int(tm.tmHeight * 1.5);
 	int const gap_row = 0;
+	int const gap_prefix = 16;
+	int const min_step_y = rid.get_height(1.5f);
 
 	count_rendered = 0;
 	int y = padding.cy;
-	char prefix[16];
 
 	for (size_t i=skip; i<ff.size(); ++i, ++count_rendered)
 	{
@@ -160,27 +157,24 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 		RECT rc = {padding.cx, y, 0, 0};
 		snippets::calc_text_rect_2(rc, dc, text, text_len);
 
-		int const step_y = (rc.bottom - rc.top) + frame_extra.cy * 2 - 1;
+		int const next_row_height = (rc.bottom - rc.top)
+			+ frame_extra.cy * 2;
+		int const step_y = next_row_height - 1;
 		int const step_y_true = step_y > min_step_y ? step_y : min_step_y;
 		int const next_y = y + step_y_true + gap_row;
 
 		if (next_y > cutoff.cy) break;
 
 		RECT tr = {padding.cx, y, 0, 0};
-		_snprintf(prefix, sizeof(prefix), "%4d", i+1);
-		SetBkMode(dc, TRANSPARENT);
-		HGDIOBJ old_font = SelectObject(dc, GetStockObject(ANSI_FIXED_FONT));
-		snippets::text_draw_2(dc, tr, prefix, strlen(prefix));
-		SelectObject(dc, old_font);
-		SetBkMode(dc, OPAQUE);
-		int const offset = tr.right + prefix_gap;
+		rid.draw(dc, tr, i+1, "%4d");
+
+		int const offset = tr.right + gap_prefix;
 		OffsetRect(&rc, offset, 0);
 
 		// SetBkColor(dc, RGB(10,10,10));
 		// SetTextColor(dc, RGB(200,200,200));
 
 		TextOut(dc, rc.left, rc.top, text, text_len);
-
 		draw_frame(dc, rc, frame_extra, RGB(100,100,100));
 
 		y = next_y;
