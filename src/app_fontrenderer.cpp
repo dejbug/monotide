@@ -174,22 +174,23 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 		RECT text_rc = {client_padding.cx, y, 0, 0};
 		snippets::calc_text_rect_2(text_rc, dc, text, text_len);
 
-		/// Calculate the layout .
+		/// Calculate the y-advance .
 		int const text_height = text_rc.bottom - text_rc.top;
-		int const next_row_height = text_height + frame_padding.cy * 2;
-		int const next_row_height_true = next_row_height > min_row_height ?
-			next_row_height : min_row_height;
-		int const next_row_height_collapsed = next_row_height_true - 1;
-		int const next_y = y + next_row_height_collapsed + row_spacing;
+		int const frame_height = text_height + frame_padding.cy * 2;
+		int const row_height = frame_height > min_row_height ?
+			frame_height : min_row_height;
+		int const row_height_collapsed = row_height - 1;
+		int const next_y = y + row_height_collapsed + row_spacing;
 
 		/// Is there room to draw this item or are we done ?
 		if (next_y > cutoff.cy) break;
 
+		/// Vertical centering offsets.
 		int const index_offset_y =
-			(next_row_height_true - rid.get_height()) / 2;
+			(row_height - rid.get_height()) / 2;
 		int const text_offset_y =
-			next_row_height_true > min_row_height ? 0 :
-				(min_row_height - next_row_height_true) / 2;
+			row_height > min_row_height ? 0 :
+				(min_row_height - row_height) / 2;
 
 		RECT prefix_rc = {client_padding.cx, y + index_offset_y, 0, 0};
 		rid.draw(dc, prefix_rc, i+1);
@@ -197,7 +198,7 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 		int const off_text_x = prefix_rc.right + col_spacing;
 		OffsetRect(&text_rc, off_text_x, text_offset_y);
 
-		int const y_line = y + int(next_row_height_true / 2.0f);
+		int const y_line = y + int(row_height / 2.0f);
 		MoveToEx(dc, prefix_rc.right, y_line, nullptr);
 		LineTo(dc, text_rc.left - frame_padding.cx, y_line);
 
