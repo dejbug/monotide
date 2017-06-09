@@ -13,6 +13,8 @@
 using namespace lib;
 
 
+#define HANDLE_WM_FR_MESSAGE_UPDATE(h,w,l,fn) ((fn)(h),(LRESULT)0)
+
 bool const draw_while_thumb_tracking = false;
 bool const only_TTF = false;
 
@@ -172,38 +174,39 @@ void wm_destroy(HWND h)
 	PostQuitMessage(0);
 }
 
+void wm_fr_message_update(HWND h)
+{
+	RECT client_rect;
+	GetClientRect(h, &client_rect);
+	HDC dc = GetDC(h);
+	FillRect(dc, &client_rect, (HBRUSH)(COLOR_MENU+1));
+#ifdef DEBUG_FR_DELAY
+	lib::window::quick_draw(dc, 8, 8,
+		font_renderer.get_msg(), -1, 42, RGB(100,100,100));
+#endif
+	ReleaseDC(h, dc);
+}
+
 LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM wParam, LPARAM lParam)
 {
 	switch(m)
 	{
-		default: break;
+		default: return DefWindowProc(h, m, wParam, lParam);
+
+		case WM_CLOSE: DestroyWindow(h); return 0;
+		case WM_ERASEBKGND: return 0;
+
 		HANDLE_MSG(h, WM_CREATE, wm_create);
 		HANDLE_MSG(h, WM_DESTROY, wm_destroy);
-		case WM_CLOSE: DestroyWindow(h); return 0;
 		HANDLE_MSG(h, WM_SIZE, wm_size);
-		case WM_ERASEBKGND: return 0;
 		HANDLE_MSG(h, WM_PAINT, wm_paint);
 		HANDLE_MSG(h, WM_MOUSEWHEEL, wm_mousewheel);
 		HANDLE_MSG(h, WM_KEYDOWN, wm_keydown);
 		HANDLE_MSG(h, WM_VSCROLL, wm_vscroll);
 		HANDLE_MSG(h, WM_NCLBUTTONDOWN, wm_nclbuttondown);
 
-		case WM_FR_MESSAGE_UPDATE:
-		{
-			RECT client_rect;
-			GetClientRect(h, &client_rect);
-			HDC dc = GetDC(h);
-			FillRect(dc, &client_rect, (HBRUSH)(COLOR_MENU+1));
-#ifdef DEBUG_FR_DELAY
-			lib::window::quick_draw(dc, 8, 8,
-				font_renderer.get_msg(), -1, 42, RGB(100,100,100));
-#endif
-			ReleaseDC(h, dc);
-			return 0;
-		}
+		HANDLE_MSG(h, WM_FR_MESSAGE_UPDATE, wm_fr_message_update);
 	}
-
-	return DefWindowProc(h, m, wParam, lParam);
 }
 
 int WINAPI WinMain(HINSTANCE i, HINSTANCE, LPSTR, int iCmdShow)
