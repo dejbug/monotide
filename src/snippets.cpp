@@ -30,8 +30,8 @@ void snippets::calc_text_rect_1(RECT & rc, HDC dc,
 	rc.bottom = rc.top + text_size.cy;
 }
 
-snippets::ScrollBar::ScrollBar(HWND h, int nBar)
-		: parent(h), bar_id(nBar)
+snippets::ScrollBar::ScrollBar(int nBar)
+		: parent(nullptr), bar_id(nBar)
 {
 }
 

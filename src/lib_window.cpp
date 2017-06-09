@@ -266,8 +266,9 @@ void lib::window::get_inner_size(HWND h, SIZE & s)
 }
 
 void lib::window::quick_draw(HDC dc, int x, int y, char const * text,
-		size_t text_len, int text_height, COLORREF text_color)
+		int text_len, int text_height, COLORREF text_color)
 {
+	if (text_len < 0) text_len = strlen(text);
 	HFONT hf = CreateFont(text_height, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_SWISS, nullptr);
 
 	SaveDC(dc);

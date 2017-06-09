@@ -14,9 +14,9 @@ FontRenderWorker::Job::Job(size_t index, size_t & count_rendered)
 }
 
 
-FontRenderWorker::FontRenderWorker(HWND h,
+FontRenderWorker::FontRenderWorker(
 		std::vector<font::EnumFontInfo> & ff)
-		: hwnd(h), fonts(ff)
+		: hwnd(nullptr), fonts(ff)
 {
 	InitializeCriticalSection(&mutex);
 	queue_event = CreateEvent(nullptr, FALSE, FALSE, nullptr);

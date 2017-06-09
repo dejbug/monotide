@@ -10,6 +10,8 @@ using namespace lib;
 struct FontRenderWorker
 		: worker::Worker
 {
+	HWND hwnd = nullptr;
+
 	struct Job
 	{
 		size_t index;
@@ -18,7 +20,7 @@ struct FontRenderWorker
 		Job(size_t, size_t &);
 	};
 
-	FontRenderWorker(HWND, std::vector<font::EnumFontInfo> &);
+	FontRenderWorker(std::vector<font::EnumFontInfo> &);
 
 	virtual ~FontRenderWorker();
 
@@ -31,7 +33,6 @@ struct FontRenderWorker
 private:
 	CRITICAL_SECTION mutex;
 	HANDLE queue_event;
-	HWND hwnd = nullptr;
 	window::BackgroundDC offscreen;
 	std::vector<font::EnumFontInfo> & fonts;
 	std::vector<Job> jobs;

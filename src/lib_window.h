@@ -49,7 +49,7 @@ void get_inner_size(HWND, SIZE &);
 void get_outer_size(HWND, SIZE &);
 
 void quick_draw(HDC, int x, int y,
-	char const * text, size_t text_len, int text_height, COLORREF);
+	char const * text, int text_len, int text_height, COLORREF);
 
 }
 }
