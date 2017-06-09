@@ -172,6 +172,7 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM w, LPARAM l)
 
 			HDC dc = GetDC(h);
 			font::list_fonts(ff, ANSI_CHARSET, only_TTF, dc);
+			font::sort_fonts(ff);
 			ReleaseDC(h, dc);
 
 #ifndef NDEBUG

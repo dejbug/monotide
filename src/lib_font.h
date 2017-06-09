@@ -9,9 +9,9 @@ struct EnumFontInfo
 {
 	ENUMLOGFONTEX elfe;
 	NEWTEXTMETRICEX ntme;
-	int FontType = 0;
+	int fontType = 0;
 
-	EnumFontInfo(ENUMLOGFONTEX elfe, NEWTEXTMETRICEX ntme, int FontType);
+	EnumFontInfo(ENUMLOGFONTEX elfe, NEWTEXTMETRICEX ntme, int fontType);
 };
 
 struct EnumFontInfoLoader
@@ -32,6 +32,8 @@ struct EnumFontInfoLoader
 void list_fonts(OUT std::vector<EnumFontInfo> &,
 		BYTE charSet=DEFAULT_CHARSET, bool onlyTrueType=false,
 		HDC=nullptr, size_t maxCount=0xffffffff);
+
+void sort_fonts(OUT std::vector<EnumFontInfo> &);
 
 void print_font_info(EnumFontInfo &);
 

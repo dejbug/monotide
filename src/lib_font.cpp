@@ -1,9 +1,10 @@
 #include "lib_font.h"
 #include <stdio.h>
+#include <algorithm>
 
 lib::font::EnumFontInfo::EnumFontInfo(
-		ENUMLOGFONTEX elfe, NEWTEXTMETRICEX ntme, int FontType)
-		: elfe(elfe), ntme(ntme), FontType(FontType)
+		ENUMLOGFONTEX elfe, NEWTEXTMETRICEX ntme, int fontType)
+		: elfe(elfe), ntme(ntme), fontType(fontType)
 {
 }
 
@@ -38,15 +39,15 @@ struct ListFontsContext
 
 int CALLBACK list_fonts_cb(
 		LOGFONTA const * lpelf, TEXTMETRICA const * lptm,
-		long unsigned int FontType, LPARAM lParam)
+		long unsigned int fontType, LPARAM lParam)
 {
 	ENUMLOGFONTEX const * lpelfe = (ENUMLOGFONTEX const *) lpelf;
 	NEWTEXTMETRICEX const * lpntme = (NEWTEXTMETRICEX const *) lptm;
 	ListFontsContext & ctx = * (ListFontsContext *) lParam;
 
-	if (!ctx.onlyTrueType || TRUETYPE_FONTTYPE == FontType)
+	if (!ctx.onlyTrueType || TRUETYPE_FONTTYPE == fontType)
 		ctx.out->push_back(
-			lib::font::EnumFontInfo(*lpelfe, *lpntme, FontType));
+			lib::font::EnumFontInfo(*lpelfe, *lpntme, fontType));
 
 	++ctx.index;
 	return ctx.out->size() < ctx.maxCount ? TRUE : FALSE;
@@ -68,11 +69,25 @@ void lib::font::list_fonts(std::vector<lib::font::EnumFontInfo> & out,
 	EnumFontFamiliesEx(hdc, &lf, list_fonts_cb, (LPARAM) &ctx, 0);
 }
 
+bool sort_fonts_cb_1(
+		lib::font::EnumFontInfo const & a,
+		lib::font::EnumFontInfo const & b)
+{
+	return _stricmp(
+		(char const *) a.elfe.elfFullName,
+		(char const *) b.elfe.elfFullName) < 0;
+}
+
+void lib::font::sort_fonts(OUT std::vector<EnumFontInfo> & ff)
+{
+	std::sort(ff.begin(), ff.end(), sort_fonts_cb_1);
+}
+
 void lib::font::print_font_info(lib::font::EnumFontInfo & efi)
 {
 	char const * ft = "?";
 
-	switch(efi.FontType)
+	switch(efi.fontType)
 	{
 		case DEVICE_FONTTYPE: ft = "dev"; break;
 		case RASTER_FONTTYPE: ft = "ras"; break;
