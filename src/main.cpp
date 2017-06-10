@@ -28,7 +28,7 @@ bool wm_create(HWND h, LPCREATESTRUCT cs)
 {
 	vbar.parent = h;
 	font_renderer.hwnd = h;
-	// font_renderer.preferredFontHeight = 42;
+	font_renderer.preferredFontHeight = 42;
 
 	SystemParametersInfo(SPI_GETWHEELSCROLLLINES,
 		0, &rows_per_scroll, 0);
