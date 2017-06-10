@@ -32,6 +32,14 @@ FontRenderWorker::~FontRenderWorker()
 
 void FontRenderWorker::task()
 {
+	if (precalcFontSizes && recalcFontSizes)
+	{
+		recalcFontSizes = false;
+		msg = "pre-calculating row sizes";
+		recalc_font_sizes();
+		msg = "";
+	}
+
 	static bool needs_flip = true;
 	bool skip = true;
 
@@ -137,15 +145,40 @@ void draw_frame(HDC dc, RECT & text_rc, SIZE const & frame_padding,
 		InflateRect(&text_rc, -frame_padding.cx, -frame_padding.cy);
 }
 
+void FontRenderWorker::recalc_font_sizes()
+{
+	font_sizes.resize(fonts.size());
+
+	for (size_t i=0; i<fonts.size(); ++i, ++count_rendered)
+	{
+		char const * text = (char const *) fonts[i].elfe.elfFullName;
+		size_t const text_len = strlen(text);
+
+		if (preferredFontHeight)
+		{
+			fonts[i].elfe.elfLogFont.lfHeight = preferredFontHeight;
+			fonts[i].elfe.elfLogFont.lfWidth = 0;
+		}
+
+		lib::font::EnumFontInfoLoader efil(offscreen.handle, fonts[i]);
+
+		RECT text_rc = {0, 0, 0, 0};
+		snippets::calc_text_rect_2(text_rc, offscreen.handle,
+			text, text_len);
+
+		font_sizes[i] = SIZE{
+			(text_rc.right-text_rc.left),
+			(text_rc.bottom-text_rc.top)};
+	}
+}
+
 void FontRenderWorker::draw_fonts(size_t skip)
 {
-	HDC dc = offscreen.handle;
-
-	if (fonts.size() != fonts_size.size())
+	if (fonts.size() != font_sizes.size())
 	{
-		fonts_size.clear();
-		fonts_size.resize(fonts.size());
-		// PRINT_VAR(fonts_size.size(), "%d");
+		font_sizes.clear();
+		font_sizes.resize(fonts.size());
+		// PRINT_VAR(font_sizes.size(), "%d");
 	}
 
 	snippets::RowIndexDrawer rid;
@@ -154,14 +187,6 @@ void FontRenderWorker::draw_fonts(size_t skip)
 	/// A row, at least, must accomodate the index (comfortably) .
 	/// The index is the row's "line number" drawn in column #0 .
 	int const min_row_height = rid.get_height(1.5f);
-
-	/// The extra space between columns and rows .
-	int const row_spacing = 0;
-	int const col_spacing = 16;
-
-	/// Extra space between frames and contents .
-	SIZE const client_padding = {8, 8};
-	SIZE const frame_padding = {2 , 2};
 
 	SIZE client_size;
 	lib::window::get_inner_size(hwnd, client_size);
@@ -189,8 +214,18 @@ void FontRenderWorker::draw_fonts(size_t skip)
 		}
 		lib::font::EnumFontInfoLoader efil(offscreen.handle, fonts[i]);
 
+
 		RECT text_rc = {client_padding.cx, y, 0, 0};
-		snippets::calc_text_rect_2(text_rc, dc, text, text_len);
+		if (precalcFontSizes)
+		{
+			text_rc.right = text_rc.left + font_sizes[i].cx;
+			text_rc.bottom = text_rc.top + font_sizes[i].cy;
+		}
+		else
+		{
+			snippets::calc_text_rect_2(text_rc, offscreen.handle,
+				text, text_len);
+		}
 
 		/// Calculate the y-advance .
 		int const text_height = text_rc.bottom - text_rc.top;
@@ -224,19 +259,14 @@ void FontRenderWorker::draw_fonts(size_t skip)
 		MoveToEx(offscreen.handle, prefix_rc.right, y_line, nullptr);
 		LineTo(offscreen.handle, text_rc.left - frame_padding.cx, y_line);
 
-		// SetBkColor(offscreen.handle, RGB(10,10,10));
-		// SetTextColor(offscreen.handle, RGB(200,200,200));
-
 		TextOut(offscreen.handle, text_rc.left, text_rc.top, text, text_len);
-		draw_frame(offscreen.handle, text_rc, frame_padding, RGB(100,100,100));
+		draw_frame(offscreen.handle, text_rc, frame_padding,
+			RGB(100,100,100));
 
-		if(!fonts_size[i].cx || !fonts_size[i].cy)
-			fonts_size[i] = SIZE{
-				(text_rc.right-text_rc.left) + frame_padding.cx * 2,
-				(text_rc.bottom-text_rc.top) + frame_padding.cy * 2};
-
-		// SelectObject(offscreen.handle, GetStockObject(DC_PEN));
-		// SetDCPenColor(offscreen.handle, RGB(100,100,100));
+		// if(!font_sizes[i].cx || !font_sizes[i].cy)
+		// 	font_sizes[i] = SIZE{
+		// 		(text_rc.right-text_rc.left) + frame_padding.cx * 2,
+		// 		(text_rc.bottom-text_rc.top) + frame_padding.cy * 2};
 
 		/// A vertical line along the left side of the frame .
 		MoveToEx(offscreen.handle, text_rc.left - 4, text_rc.top, nullptr);

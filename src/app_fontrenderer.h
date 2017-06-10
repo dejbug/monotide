@@ -13,6 +13,15 @@ struct FontRenderWorker
 	HWND hwnd = nullptr;
 	size_t count_rendered = 0;
 	LONG preferredFontHeight = 0;
+	bool precalcFontSizes = true;
+
+	/// The extra space between columns and rows .
+	int const row_spacing = 0;
+	int const col_spacing = 16;
+
+	/// Extra space between frames and contents .
+	SIZE const client_padding = {8, 8};
+	SIZE const frame_padding = {2 , 2};
 
 	struct Job
 	{
@@ -24,6 +33,8 @@ struct FontRenderWorker
 	FontRenderWorker(std::vector<font::EnumFontInfo> &);
 
 	virtual ~FontRenderWorker();
+
+	void recalc_font_sizes();
 
 	void on_parent_resize();
 
@@ -39,9 +50,10 @@ private:
 	HANDLE queue_event;
 	window::BackgroundDC offscreen;
 	std::vector<font::EnumFontInfo> & fonts;
-	std::vector<SIZE> fonts_size;
+	std::vector<SIZE> font_sizes;
 	std::vector<Job> jobs;
 	char const * msg = nullptr;
+	bool recalcFontSizes = true;
 
 	void draw_fonts(size_t);
 
