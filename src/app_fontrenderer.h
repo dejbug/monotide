@@ -35,6 +35,7 @@ private:
 	HANDLE queue_event;
 	window::BackgroundDC offscreen;
 	std::vector<font::EnumFontInfo> & fonts;
+	std::vector<SIZE> fonts_size;
 	std::vector<Job> jobs;
 	char const * msg = nullptr;
 
@@ -42,4 +43,4 @@ private:
 };
 
 void draw_fonts(HWND, HDC, std::vector<font::EnumFontInfo> &,
-	size_t, size_t &);
+	std::vector<SIZE> &, size_t, size_t &);

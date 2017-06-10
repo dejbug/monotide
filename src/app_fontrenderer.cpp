@@ -90,7 +90,8 @@ void FontRenderWorker::task()
 #endif
 
 	offscreen.clear(COLOR_MENU);
-	draw_fonts(hwnd, offscreen.handle, fonts, index, count_rendered);
+	draw_fonts(hwnd, offscreen.handle, fonts, fonts_size,
+		index, count_rendered);
 	// offscreen.flip();
 	needs_flip = true;
 }
@@ -127,12 +128,18 @@ void draw_frame(HDC dc, RECT & text_rc, SIZE const & frame_padding,
 		InflateRect(&text_rc, -frame_padding.cx, -frame_padding.cy);
 }
 
-
-
-
-void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
+void draw_fonts(HWND h, HDC dc,
+		std::vector<font::EnumFontInfo> & ff,
+		std::vector<SIZE> & ff_size,
 		size_t skip, OUT size_t & count_rendered)
 {
+	if (ff.size() != ff_size.size())
+	{
+		ff_size.clear();
+		ff_size.resize(ff.size());
+		// PRINT_VAR(ff_size.size(), "%d");
+	}
+
 	snippets::RowIndexDrawer rid;
 	rid.set_digits_from_max_index(ff.size());
 
@@ -199,6 +206,7 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 		SelectObject(dc, GetStockObject(DC_PEN));
 		SetDCPenColor(dc, RGB(100,100,100));
 
+		/// Line linking index to frame .
 		int const y_line = y + int(row_height / 2.0f);
 		MoveToEx(dc, prefix_rc.right, y_line, nullptr);
 		LineTo(dc, text_rc.left - frame_padding.cx, y_line);
@@ -209,9 +217,15 @@ void draw_fonts(HWND h, HDC dc, std::vector<font::EnumFontInfo> & ff,
 		TextOut(dc, text_rc.left, text_rc.top, text, text_len);
 		draw_frame(dc, text_rc, frame_padding, RGB(100,100,100));
 
+		if(!ff_size[i].cx || !ff_size[i].cy)
+			ff_size[i] = SIZE{
+				(text_rc.right-text_rc.left) + frame_padding.cx * 2,
+				(text_rc.bottom-text_rc.top) + frame_padding.cy * 2};
+
 		// SelectObject(dc, GetStockObject(DC_PEN));
 		// SetDCPenColor(dc, RGB(100,100,100));
 
+		/// A vertical line along the left side of the frame .
 		MoveToEx(dc, text_rc.left - 4, text_rc.top, nullptr);
 		LineTo(dc, text_rc.left - 4, text_rc.bottom);
 
