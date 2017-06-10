@@ -120,7 +120,7 @@ void wm_vscroll(HWND h, HWND bar, UINT nScrollCode, int nPos)
 			break;
 
 		case SB_PAGEDOWN:
-			if (vbar.scroll(+count_rendered-1))
+			if (!count_rendered || vbar.scroll(+count_rendered-1))
 				InvalidateRect(h, NULL, TRUE);
 			break;
 
@@ -137,7 +137,6 @@ void wm_vscroll(HWND h, HWND bar, UINT nScrollCode, int nPos)
 			vbar.update();
 			font_renderer.queue(vbar.index, count_rendered);
 			break;
-
 	}
 }
 

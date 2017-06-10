@@ -8,8 +8,8 @@
 #include "snippets.h"
 
 
-FontRenderWorker::Job::Job(size_t index, size_t & count_rendered)
-		: index(index), count_rendered(count_rendered)
+FontRenderWorker::Job::Job(size_t index)
+		: index(index)
 {
 }
 
@@ -36,7 +36,6 @@ void FontRenderWorker::task()
 	bool skip = true;
 
 	size_t index = 0;
-	size_t * count_rendered = nullptr;
 
 #ifndef NDEBUG
 	size_t jobs_dropped = 0;
@@ -61,7 +60,6 @@ void FontRenderWorker::task()
 #endif
 		skip = false;
 		index = jobs.back().index;
-		count_rendered = &jobs.back().count_rendered;
 		jobs.clear();
 	}
 	LeaveCriticalSection(&mutex);
@@ -92,7 +90,7 @@ void FontRenderWorker::task()
 #endif
 
 	offscreen.clear(COLOR_MENU);
-	draw_fonts(hwnd, offscreen.handle, fonts, index, *count_rendered);
+	draw_fonts(hwnd, offscreen.handle, fonts, index, count_rendered);
 	// offscreen.flip();
 	needs_flip = true;
 }
@@ -104,10 +102,10 @@ void FontRenderWorker::on_parent_resize()
 	ReleaseDC(hwnd, hdc);
 }
 
-void FontRenderWorker::queue(size_t index, size_t & count_rendered)
+void FontRenderWorker::queue(size_t index, size_t &)
 {
 	EnterCriticalSection(&mutex);
-	jobs.push_back(Job(index, count_rendered));
+	jobs.push_back(Job(index));
 	LeaveCriticalSection(&mutex);
 	SetEvent(queue_event);
 }

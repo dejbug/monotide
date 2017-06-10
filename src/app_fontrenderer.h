@@ -11,13 +11,13 @@ struct FontRenderWorker
 		: worker::Worker
 {
 	HWND hwnd = nullptr;
+	size_t count_rendered = 0;
 
 	struct Job
 	{
 		size_t index;
-		size_t & count_rendered;
 
-		Job(size_t, size_t &);
+		Job(size_t);
 	};
 
 	FontRenderWorker(std::vector<font::EnumFontInfo> &);
