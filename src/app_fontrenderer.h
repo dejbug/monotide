@@ -12,6 +12,7 @@ struct FontRenderWorker
 {
 	HWND hwnd = nullptr;
 	size_t count_rendered = 0;
+	LONG preferredFontHeight = 0;
 
 	struct Job
 	{
@@ -42,8 +43,7 @@ private:
 	std::vector<Job> jobs;
 	char const * msg = nullptr;
 
+	void draw_fonts(size_t);
+
 	void task();
 };
-
-void draw_fonts(HWND, HDC, std::vector<font::EnumFontInfo> &,
-	std::vector<SIZE> &, size_t, size_t &);

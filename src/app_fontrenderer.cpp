@@ -15,8 +15,8 @@ FontRenderWorker::Job::Job(size_t index)
 
 
 FontRenderWorker::FontRenderWorker(
-		std::vector<font::EnumFontInfo> & ff)
-		: hwnd(nullptr), fonts(ff)
+		std::vector<font::EnumFontInfo> & fonts)
+		: hwnd(nullptr), fonts(fonts)
 {
 	InitializeCriticalSection(&mutex);
 	queue_event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -90,8 +90,7 @@ void FontRenderWorker::task()
 #endif
 
 	offscreen.clear(COLOR_MENU);
-	draw_fonts(hwnd, offscreen.handle, fonts, fonts_size,
-		index, count_rendered);
+	draw_fonts(index);
 	// offscreen.flip();
 	needs_flip = true;
 }
@@ -138,20 +137,19 @@ void draw_frame(HDC dc, RECT & text_rc, SIZE const & frame_padding,
 		InflateRect(&text_rc, -frame_padding.cx, -frame_padding.cy);
 }
 
-void draw_fonts(HWND h, HDC dc,
-		std::vector<font::EnumFontInfo> & ff,
-		std::vector<SIZE> & ff_size,
-		size_t skip, OUT size_t & count_rendered)
+void FontRenderWorker::draw_fonts(size_t skip)
 {
-	if (ff.size() != ff_size.size())
+	HDC dc = offscreen.handle;
+
+	if (fonts.size() != fonts_size.size())
 	{
-		ff_size.clear();
-		ff_size.resize(ff.size());
-		// PRINT_VAR(ff_size.size(), "%d");
+		fonts_size.clear();
+		fonts_size.resize(fonts.size());
+		// PRINT_VAR(fonts_size.size(), "%d");
 	}
 
 	snippets::RowIndexDrawer rid;
-	rid.set_digits_from_max_index(ff.size());
+	rid.set_digits_from_max_index(fonts.size());
 
 	/// A row, at least, must accomodate the index (comfortably) .
 	/// The index is the row's "line number" drawn in column #0 .
@@ -166,7 +164,7 @@ void draw_fonts(HWND h, HDC dc,
 	SIZE const frame_padding = {2 , 2};
 
 	SIZE client_size;
-	lib::window::get_inner_size(h, client_size);
+	lib::window::get_inner_size(hwnd, client_size);
 
 	/// The rightmost, bottommost points after which nothing
 	/// SHOULD be drawn.
@@ -177,14 +175,19 @@ void draw_fonts(HWND h, HDC dc,
 	count_rendered = 0;
 	int y = client_padding.cy;
 
-	for (size_t i=skip; i<ff.size(); ++i, ++count_rendered)
+	for (size_t i=skip; i<fonts.size(); ++i, ++count_rendered)
 	{
-		char const * text = (char const *) ff[i].elfe.elfFullName;
+		char const * text = (char const *) fonts[i].elfe.elfFullName;
 		size_t const text_len = strlen(text);
 
 		/// Select this font into the device context, so we can
 		/// measure it, etc. .
-		lib::font::EnumFontInfoLoader efil(dc, ff[i]);
+		if (preferredFontHeight)
+		{
+			fonts[i].elfe.elfLogFont.lfHeight = 42;
+			fonts[i].elfe.elfLogFont.lfWidth = 0;
+		}
+		lib::font::EnumFontInfoLoader efil(offscreen.handle, fonts[i]);
 
 		RECT text_rc = {client_padding.cx, y, 0, 0};
 		snippets::calc_text_rect_2(text_rc, dc, text, text_len);
@@ -208,36 +211,36 @@ void draw_fonts(HWND h, HDC dc,
 				(min_row_height - text_height) / 2;
 
 		RECT prefix_rc = {client_padding.cx, y + index_offset_y, 0, 0};
-		rid.draw(dc, prefix_rc, i+1);
+		rid.draw(offscreen.handle, prefix_rc, i+1);
 
 		int const off_text_x = prefix_rc.right + col_spacing;
 		OffsetRect(&text_rc, off_text_x, text_offset_y);
 
-		SelectObject(dc, GetStockObject(DC_PEN));
-		SetDCPenColor(dc, RGB(100,100,100));
+		SelectObject(offscreen.handle, GetStockObject(DC_PEN));
+		SetDCPenColor(offscreen.handle, RGB(100,100,100));
 
 		/// Line linking index to frame .
 		int const y_line = y + int(row_height / 2.0f);
-		MoveToEx(dc, prefix_rc.right, y_line, nullptr);
-		LineTo(dc, text_rc.left - frame_padding.cx, y_line);
+		MoveToEx(offscreen.handle, prefix_rc.right, y_line, nullptr);
+		LineTo(offscreen.handle, text_rc.left - frame_padding.cx, y_line);
 
-		// SetBkColor(dc, RGB(10,10,10));
-		// SetTextColor(dc, RGB(200,200,200));
+		// SetBkColor(offscreen.handle, RGB(10,10,10));
+		// SetTextColor(offscreen.handle, RGB(200,200,200));
 
-		TextOut(dc, text_rc.left, text_rc.top, text, text_len);
-		draw_frame(dc, text_rc, frame_padding, RGB(100,100,100));
+		TextOut(offscreen.handle, text_rc.left, text_rc.top, text, text_len);
+		draw_frame(offscreen.handle, text_rc, frame_padding, RGB(100,100,100));
 
-		if(!ff_size[i].cx || !ff_size[i].cy)
-			ff_size[i] = SIZE{
+		if(!fonts_size[i].cx || !fonts_size[i].cy)
+			fonts_size[i] = SIZE{
 				(text_rc.right-text_rc.left) + frame_padding.cx * 2,
 				(text_rc.bottom-text_rc.top) + frame_padding.cy * 2};
 
-		// SelectObject(dc, GetStockObject(DC_PEN));
-		// SetDCPenColor(dc, RGB(100,100,100));
+		// SelectObject(offscreen.handle, GetStockObject(DC_PEN));
+		// SetDCPenColor(offscreen.handle, RGB(100,100,100));
 
 		/// A vertical line along the left side of the frame .
-		MoveToEx(dc, text_rc.left - 4, text_rc.top, nullptr);
-		LineTo(dc, text_rc.left - 4, text_rc.bottom);
+		MoveToEx(offscreen.handle, text_rc.left - 4, text_rc.top, nullptr);
+		LineTo(offscreen.handle, text_rc.left - 4, text_rc.bottom);
 
 		y = next_y;
 	}
