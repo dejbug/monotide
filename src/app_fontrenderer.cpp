@@ -184,7 +184,7 @@ void FontRenderWorker::draw_fonts(size_t skip)
 		/// measure it, etc. .
 		if (preferredFontHeight)
 		{
-			fonts[i].elfe.elfLogFont.lfHeight = 42;
+			fonts[i].elfe.elfLogFont.lfHeight = preferredFontHeight;
 			fonts[i].elfe.elfLogFont.lfWidth = 0;
 		}
 		lib::font::EnumFontInfoLoader efil(offscreen.handle, fonts[i]);
