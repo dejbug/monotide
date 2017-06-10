@@ -72,20 +72,24 @@ void wm_keydown(HWND h, UINT key, BOOL, int repeatCount, UINT flags)
 	{
 		case VK_PRIOR:
 		{
-			int const steps = font_renderer.count_rendered >=
-				rows_per_scroll ? rows_per_scroll :
-				font_renderer.count_rendered;
-			if (vbar.scroll(-steps))
+			// int const steps = font_renderer.count_rendered >=
+			// 	rows_per_scroll ? rows_per_scroll :
+			// 	font_renderer.count_rendered;
+			// if (vbar.scroll(-steps))
+			// 	InvalidateRect(h, NULL, TRUE);
+			if (vbar.scroll(-font_renderer.get_page_prev_count()))
 				InvalidateRect(h, NULL, TRUE);
 			break;
 		}
 
 		case VK_NEXT:
 		{
-			int const steps = font_renderer.count_rendered > 1 ?
-				font_renderer.count_rendered-1 :
-				font_renderer.count_rendered;
-			if (vbar.scroll(steps))
+			// int const steps = font_renderer.count_rendered > 1 ?
+			// 	font_renderer.count_rendered-1 :
+			// 	font_renderer.count_rendered;
+			// if (vbar.scroll(steps))
+			// 	InvalidateRect(h, NULL, TRUE);
+			if (vbar.scroll(font_renderer.get_page_next_count()))
 				InvalidateRect(h, NULL, TRUE);
 			break;
 		}

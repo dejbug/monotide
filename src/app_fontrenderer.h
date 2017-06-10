@@ -30,6 +30,9 @@ struct FontRenderWorker
 
 	char const * get_msg() const;
 
+	size_t get_page_next_count() const;
+	size_t get_page_prev_count() const;
+
 private:
 	CRITICAL_SECTION mutex;
 	HANDLE queue_event;

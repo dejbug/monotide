@@ -117,6 +117,16 @@ char const * FontRenderWorker::get_msg() const
 	return msg ? msg : "";
 }
 
+size_t FontRenderWorker::get_page_next_count() const
+{
+	return count_rendered ? count_rendered-1 : 0;
+}
+
+size_t FontRenderWorker::get_page_prev_count() const
+{
+	return 10;
+}
+
 void draw_frame(HDC dc, RECT & text_rc, SIZE const & frame_padding,
 		COLORREF color=0, bool rc_adjust=false)
 {
