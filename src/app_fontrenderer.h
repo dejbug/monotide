@@ -26,7 +26,7 @@ struct FontRenderWorker
 
 	void on_parent_resize();
 
-	void queue(size_t, size_t &);
+	void queue(size_t);
 
 	char const * get_msg() const;
 

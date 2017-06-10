@@ -21,7 +21,6 @@ bool const only_TTF = false;
 static std::vector<font::EnumFontInfo> ff;
 static UINT rows_per_scroll = 1;
 static snippets::ScrollBar vbar(SB_VERT);
-static size_t count_rendered = 0;
 static FontRenderWorker font_renderer(ff);
 
 
@@ -64,7 +63,7 @@ void wm_paint(HWND h)
 
 	EndPaint(h, &ps);
 
-	font_renderer.queue(vbar.index, count_rendered);
+	font_renderer.queue(vbar.index);
 }
 
 void wm_keydown(HWND h, UINT key, BOOL, int repeatCount, UINT flags)
@@ -73,8 +72,9 @@ void wm_keydown(HWND h, UINT key, BOOL, int repeatCount, UINT flags)
 	{
 		case VK_PRIOR:
 		{
-			int const steps = count_rendered >= rows_per_scroll ?
-				rows_per_scroll : count_rendered;
+			int const steps = font_renderer.count_rendered >=
+				rows_per_scroll ? rows_per_scroll :
+				font_renderer.count_rendered;
 			if (vbar.scroll(-steps))
 				InvalidateRect(h, NULL, TRUE);
 			break;
@@ -82,8 +82,9 @@ void wm_keydown(HWND h, UINT key, BOOL, int repeatCount, UINT flags)
 
 		case VK_NEXT:
 		{
-			int const steps = count_rendered > 1 ?
-				count_rendered-1 : count_rendered;
+			int const steps = font_renderer.count_rendered > 1 ?
+				font_renderer.count_rendered-1 :
+				font_renderer.count_rendered;
 			if (vbar.scroll(steps))
 				InvalidateRect(h, NULL, TRUE);
 			break;
@@ -120,7 +121,8 @@ void wm_vscroll(HWND h, HWND bar, UINT nScrollCode, int nPos)
 			break;
 
 		case SB_PAGEDOWN:
-			if (!count_rendered || vbar.scroll(+count_rendered-1))
+			if (!font_renderer.count_rendered ||
+					vbar.scroll(+font_renderer.count_rendered-1))
 				InvalidateRect(h, NULL, TRUE);
 			break;
 
@@ -129,13 +131,13 @@ void wm_vscroll(HWND h, HWND bar, UINT nScrollCode, int nPos)
 			if (draw_while_thumb_tracking)
 			{
 				vbar.update();
-				font_renderer.queue(vbar.index, count_rendered);
+				font_renderer.queue(vbar.index);
 			}
 			break;
 
 		case SB_THUMBPOSITION:
 			vbar.update();
-			font_renderer.queue(vbar.index, count_rendered);
+			font_renderer.queue(vbar.index);
 			break;
 	}
 }

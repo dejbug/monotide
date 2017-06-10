@@ -102,7 +102,7 @@ void FontRenderWorker::on_parent_resize()
 	ReleaseDC(hwnd, hdc);
 }
 
-void FontRenderWorker::queue(size_t index, size_t &)
+void FontRenderWorker::queue(size_t index)
 {
 	EnterCriticalSection(&mutex);
 	jobs.push_back(Job(index));
