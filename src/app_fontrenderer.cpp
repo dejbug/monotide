@@ -70,7 +70,6 @@ FontRenderWorker::Job::Job(size_t index)
 {
 }
 
-
 FontRenderWorker::FontRenderWorker(
 		std::vector<font::EnumFontInfo> & fonts)
 		: hwnd(nullptr), fonts(fonts)
@@ -157,8 +156,8 @@ void FontRenderWorker::task()
 #endif
 
 	offscreen.clear(COLOR_MENU);
-	draw_fonts(index);
-	// offscreen.flip();
+	// draw_fonts(index);
+	draw_fonts_ex(index);
 	needs_flip = true;
 }
 
@@ -204,8 +203,47 @@ void draw_frame(HDC dc, RECT & text_rc, SIZE const & frame_padding,
 		InflateRect(&text_rc, -frame_padding.cx, -frame_padding.cy);
 }
 
+void on_draw_font(HDC dc, size_t i,
+		RECT & rc, char const * text, size_t text_len)
+{
+	// PRINT_VAR(text, "%s");
+	TextOut(dc, rc.left, rc.top, text, text_len);
+	// draw_frame(dc, rc, frame_padding, RGB(100,100,100));
+}
+
 void FontRenderWorker::draw_fonts_ex(size_t first, bool backwards)
 {
+	SIZE client_size;
+	lib::window::get_inner_size(hwnd, client_size);
+
+	SIZE const cutoff = {
+		client_size.cx - client_padding.cx,
+		client_size.cy - client_padding.cy};
+
+	count_rendered = 0;
+	int y = client_padding.cy;
+
+	for (size_t i=first; i<fonts.size(); ++i, ++count_rendered)
+	{
+		char const * text = (char const *) fonts[i].elfe.elfFullName;
+		size_t const text_len = strlen(text);
+
+		int const next_y = y + fonts[i].elfe.elfLogFont.lfHeight;
+
+		if (next_y > cutoff.cy) break;
+
+		if (preferredFontHeight)
+		{
+			fonts[i].elfe.elfLogFont.lfHeight = preferredFontHeight;
+			fonts[i].elfe.elfLogFont.lfWidth = 0;
+		}
+		lib::font::EnumFontInfoLoader efil(offscreen.handle, fonts[i]);
+
+		RECT text_rc = {client_padding.cx, y, 0, 0};
+		on_draw_font(offscreen.handle, i, text_rc, text, text_len);
+
+		y = next_y;
+	}
 }
 
 void FontRenderWorker::draw_fonts(size_t skip)

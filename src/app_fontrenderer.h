@@ -22,9 +22,10 @@ struct FontRenderWorker
 		: worker::Worker
 {
 	HWND hwnd = nullptr;
-	size_t count_rendered = 0;
 	LONG preferredFontHeight = 0;
 	int min_row_height = 0;
+
+	size_t count_rendered = 0;
 
 	/// The extra space between columns and rows .
 	int const row_spacing = 0;
@@ -42,11 +43,9 @@ struct FontRenderWorker
 	};
 
 	FontRenderWorker(std::vector<font::EnumFontInfo> &);
-
 	virtual ~FontRenderWorker();
 
 	void recalc_font_sizes();
-
 	void on_parent_resize();
 
 	void queue(size_t);
@@ -65,8 +64,8 @@ private:
 
 	window::BackgroundDC offscreen;
 	std::vector<font::EnumFontInfo> & fonts;
-	FontDrawCache draw_cache;
 
+	FontDrawCache draw_cache;
 	snippets::RowIndexDrawer rid;
 
 	bool recalcFontSizes = false;
