@@ -4,8 +4,19 @@
 #include "lib_worker.h"
 #include "lib_window.h"
 #include "lib_font.h"
+#include "snippets.h"
 
 using namespace lib;
+
+struct FontDrawCache
+{
+	std::vector<SIZE> sizes;
+
+	void ensure_capacity(std::vector<font::EnumFontInfo> &);
+	void precalc(std::vector<font::EnumFontInfo> &,
+		long preferredFontHeight=0);
+	void get_size(OUT RECT &, size_t index, HDC, char const *, size_t);
+};
 
 struct FontRenderWorker
 		: worker::Worker
@@ -13,7 +24,7 @@ struct FontRenderWorker
 	HWND hwnd = nullptr;
 	size_t count_rendered = 0;
 	LONG preferredFontHeight = 0;
-	bool precalcFontSizes = true;
+	int min_row_height = 0;
 
 	/// The extra space between columns and rows .
 	int const row_spacing = 0;
@@ -48,14 +59,20 @@ struct FontRenderWorker
 private:
 	CRITICAL_SECTION mutex;
 	HANDLE queue_event;
+	std::vector<Job> jobs;
+
+	char const * msg = nullptr;
+
 	window::BackgroundDC offscreen;
 	std::vector<font::EnumFontInfo> & fonts;
-	std::vector<SIZE> font_sizes;
-	std::vector<Job> jobs;
-	char const * msg = nullptr;
-	bool recalcFontSizes = true;
+	FontDrawCache draw_cache;
+
+	snippets::RowIndexDrawer rid;
+
+	bool recalcFontSizes = false;
 
 	void draw_fonts(size_t);
+	void draw_fonts_ex(size_t first, bool backwards=false);
 
 	void task();
 };

@@ -111,3 +111,13 @@ void lib::font::draw_font_label(HDC dc, RECT & rc, EnumFontInfo & fi)
 	ExtTextOut(dc, rc.left, rc.top,
 		0, nullptr, text, text_len, nullptr);
 }
+
+int lib::font::get_sysfont_height()
+{
+	TEXTMETRIC tm;
+	HDC dc = GetDC(nullptr);
+	SelectObject(dc, GetStockObject(ANSI_FIXED_FONT));
+	GetTextMetrics(dc, &tm);
+	ReleaseDC(nullptr, dc);
+	return tm.tmHeight;
+}

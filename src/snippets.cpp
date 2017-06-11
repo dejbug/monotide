@@ -111,7 +111,9 @@ void snippets::RowIndexDrawer::set_digits(unsigned count)
 
 void snippets::RowIndexDrawer::set_digits_from_max_index(size_t index)
 {
+	if (last_max_index == index) return;
 	set_digits(floor(log10(index ? index : 1) + 1));
+	last_max_index = index;
 }
 
 void snippets::RowIndexDrawer::draw(HDC dc, RECT & rc,

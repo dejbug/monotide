@@ -29,6 +29,7 @@ struct RowIndexDrawer
 	TEXTMETRIC tm;
 	char format[8];
 	char buffer[32];
+	size_t last_max_index = 0;
 
 	RowIndexDrawer();
 	int get_height(float scale=1.0) const;

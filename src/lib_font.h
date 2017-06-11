@@ -39,5 +39,7 @@ void print_font_info(EnumFontInfo &);
 
 void draw_font_label(HDC, RECT &, EnumFontInfo &);
 
+int get_sysfont_height();
+
 }
 }
