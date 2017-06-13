@@ -212,7 +212,7 @@ void on_draw_font(HDC dc, size_t i,
 	// Sleep(100);
 }
 
-void FontRenderWorker::draw_fonts_ex(size_t first, bool backwards)
+void FontRenderWorker::draw_fonts_ex(size_t first)
 {
 	SIZE client_size;
 	lib::window::get_inner_size(hwnd, client_size);

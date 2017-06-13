@@ -71,7 +71,7 @@ private:
 	bool recalcFontSizes = false;
 
 	void draw_fonts(size_t);
-	void draw_fonts_ex(size_t first, bool backwards=false);
+	void draw_fonts_ex(size_t first);
 
 	void task();
 };
