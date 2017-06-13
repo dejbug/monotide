@@ -176,7 +176,6 @@ void FontRenderWorker::queue(size_t index)
 	SetEvent(queue_event);
 }
 
-
 char const * FontRenderWorker::get_msg() const
 {
 	return msg ? msg : "";
@@ -209,6 +208,8 @@ void on_draw_font(HDC dc, size_t i,
 	// PRINT_VAR(text, "%s");
 	TextOut(dc, rc.left, rc.top, text, text_len);
 	// draw_frame(dc, rc, frame_padding, RGB(100,100,100));
+
+	// Sleep(100);
 }
 
 void FontRenderWorker::draw_fonts_ex(size_t first, bool backwards)
@@ -225,6 +226,12 @@ void FontRenderWorker::draw_fonts_ex(size_t first, bool backwards)
 
 	for (size_t i=first; i<fonts.size(); ++i, ++count_rendered)
 	{
+		if (!jobs.empty())
+		{
+			printf("jobs added while rendering last job\n");
+			break;
+		}
+
 		char const * text = (char const *) fonts[i].elfe.elfFullName;
 		size_t const text_len = strlen(text);
 
