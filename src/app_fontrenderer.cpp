@@ -216,6 +216,7 @@ void on_draw_font(HDC dc, size_t i,
 void FontRenderWorker::draw_fonts_ex_backward(size_t first)
 {
 	if (0 == first) return;
+	if (first >= fonts.size()) return;
 
 	SIZE client_size;
 	lib::window::get_inner_size(hwnd, client_size);
