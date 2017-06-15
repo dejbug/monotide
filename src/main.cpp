@@ -13,7 +13,7 @@
 using namespace lib;
 
 
-#define HANDLE_WM_FR_MESSAGE_UPDATE(h,w,l,fn) ((fn)(h),(LRESULT)0)
+#define HANDLE_WM_FR_MESSAGE_UPDATE(h,w,l,fn) ((fn)(h),(LRESULT) 0)
 
 bool const draw_while_thumb_tracking = false;
 bool const only_TTF = false;
@@ -70,11 +70,6 @@ void wm_keydown(HWND h, UINT key, BOOL, int repeatCount, UINT flags)
 	{
 		case VK_PRIOR:
 		{
-			// int const steps = font_renderer.count_rendered >=
-			// 	rows_per_scroll ? rows_per_scroll :
-			// 	font_renderer.count_rendered;
-			// if (vbar.scroll(-steps))
-			// 	InvalidateRect(h, NULL, TRUE);
 			if (vbar.scroll(-font_renderer.get_page_prev_count()))
 				InvalidateRect(h, NULL, TRUE);
 			break;
@@ -82,11 +77,6 @@ void wm_keydown(HWND h, UINT key, BOOL, int repeatCount, UINT flags)
 
 		case VK_NEXT:
 		{
-			// int const steps = font_renderer.count_rendered > 1 ?
-			// 	font_renderer.count_rendered-1 :
-			// 	font_renderer.count_rendered;
-			// if (vbar.scroll(steps))
-			// 	InvalidateRect(h, NULL, TRUE);
 			if (vbar.scroll(font_renderer.get_page_next_count()))
 				InvalidateRect(h, NULL, TRUE);
 			break;

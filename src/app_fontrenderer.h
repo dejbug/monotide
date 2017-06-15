@@ -25,6 +25,7 @@ struct FontRenderWorker
 	LONG preferredFontHeight = 0;
 	int min_row_height = 0;
 
+	size_t first_index = 0;
 	size_t count_rendered = 0;
 
 	/// The extra space between columns and rows .
@@ -72,6 +73,7 @@ private:
 
 	void draw_fonts(size_t);
 	void draw_fonts_ex(size_t first);
+	void draw_fonts_ex_backward(size_t first);
 
 	void task();
 };

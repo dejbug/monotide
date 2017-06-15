@@ -158,6 +158,7 @@ void FontRenderWorker::task()
 	offscreen.clear(COLOR_MENU);
 	// draw_fonts(index);
 	draw_fonts_ex(index);
+	// draw_fonts_ex_backward(index);
 	needs_flip = true;
 }
 
@@ -212,6 +213,50 @@ void on_draw_font(HDC dc, size_t i,
 	// Sleep(100);
 }
 
+void FontRenderWorker::draw_fonts_ex_backward(size_t first)
+{
+	if (0 == first) return;
+
+	SIZE client_size;
+	lib::window::get_inner_size(hwnd, client_size);
+
+	SIZE const cutoff = {
+		client_size.cx - client_padding.cx,
+		client_size.cy - client_padding.cy};
+
+	first_index = first;
+	count_rendered = 0;
+	int y = cutoff.cy;
+
+	for (size_t i=first; i>=0; --i, ++count_rendered)
+	{
+		if (!jobs.empty())
+		{
+			printf("jobs added while rendering last job\n");
+			break;
+		}
+
+		char const * text = (char const *) fonts[i].elfe.elfFullName;
+		size_t const text_len = strlen(text);
+
+		int const next_y = y - fonts[i].elfe.elfLogFont.lfHeight;
+
+		if (next_y < client_padding.cy) break;
+
+		y = next_y;
+
+		if (preferredFontHeight)
+		{
+			fonts[i].elfe.elfLogFont.lfHeight = preferredFontHeight;
+			fonts[i].elfe.elfLogFont.lfWidth = 0;
+		}
+		lib::font::EnumFontInfoLoader efil(offscreen.handle, fonts[i]);
+
+		RECT text_rc = {client_padding.cx, y, 0, 0};
+		on_draw_font(offscreen.handle, i, text_rc, text, text_len);
+	}
+}
+
 void FontRenderWorker::draw_fonts_ex(size_t first)
 {
 	SIZE client_size;
@@ -221,6 +266,7 @@ void FontRenderWorker::draw_fonts_ex(size_t first)
 		client_size.cx - client_padding.cx,
 		client_size.cy - client_padding.cy};
 
+	first_index = first;
 	count_rendered = 0;
 	int y = client_padding.cy;
 
