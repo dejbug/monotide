@@ -48,7 +48,15 @@ build/monotide.exe: build/app_fontrenderer.o
 build/monotide.exe: build/main.o
 build/monotide.exe: ; $(CXX) $^ -o $@ $(CXXFLAGS)
 
-build/%.o: src/%.cpp ; $(CXX) -c $^ -o $@ $(CXXFLAGS)
+define cmpl
+$(CXX) -c $(filter %.cpp,$2) -o $1 $(CXXFLAGS)
+endef
+
+build/snippets.o: src/snippets.cpp src/snippets.h ; $(call cmpl,$@,$^)
+build/app_%.o: src/app_%.cpp src/app_%.h ; $(call cmpl,$@,$^)
+build/lib_%.o: src/lib_%.cpp src/lib_%.h ; $(call cmpl,$@,$^)
+
+build/%.o: src/%.cpp ; $(call cmpl,$@,$^)
 
 .PHONY: clean
 clean:

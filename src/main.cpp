@@ -17,32 +17,41 @@ using namespace lib;
 
 bool const draw_while_thumb_tracking = false;
 bool const only_TTF = false;
+bool const precalc = true;
+LONG const preferredFontHeight = 48;
 
-static std::vector<font::EnumFontInfo> ff;
+static std::vector<font::EnumFontInfo> fonts;
 static UINT rows_per_scroll = 1;
 static snippets::ScrollBar vbar(SB_VERT);
-static FontRenderWorker font_renderer(ff);
+static FontRenderWorker font_renderer(fonts);
 
 
 bool wm_create(HWND h, LPCREATESTRUCT cs)
 {
 	vbar.parent = h;
 	font_renderer.hwnd = h;
-	// font_renderer.preferredFontHeight = 42;
 
 	SystemParametersInfo(SPI_GETWHEELSCROLLLINES,
 		0, &rows_per_scroll, 0);
 
 	HDC dc = GetDC(h);
-	font::list_fonts(ff, ANSI_CHARSET, only_TTF, dc);
-	font::sort_fonts(ff);
+	font::list_fonts(fonts, ANSI_CHARSET, only_TTF, dc);
+	font::sort_fonts(fonts);
 	ReleaseDC(h, dc);
 
+	if (preferredFontHeight && !precalc)
+		font_renderer.preferredFontHeight = preferredFontHeight;
+
+	if (precalc)
+		font_renderer.draw_cache.precalc(fonts, preferredFontHeight);
+	else
+		font_renderer.draw_cache.ensure_capacity(fonts);
+
 #ifndef NDEBUG
-	printf(" %d fonts found\n", ff.size());
+	printf(" %d fonts found\n", fonts.size());
 #endif
 
-	vbar.set_count(ff.size());
+	vbar.set_count(fonts.size());
 
 	font_renderer.start();
 

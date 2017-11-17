@@ -41,4 +41,10 @@ struct RowIndexDrawer
 void text_draw_1(HDC, RECT &, char const * text, size_t text_len);
 void text_draw_2(HDC, RECT &, char const * text, size_t text_len);
 
+namespace scroll {
+
+
+
+}
+
 }

@@ -156,8 +156,8 @@ void FontRenderWorker::task()
 #endif
 
 	offscreen.clear(COLOR_MENU);
-	// draw_fonts(index);
-	draw_fonts_ex(index);
+	draw_fonts(index);
+	// draw_fonts_ex(index);
 	// draw_fonts_ex_backward(index);
 	needs_flip = true;
 }
@@ -282,7 +282,7 @@ void FontRenderWorker::draw_fonts_ex(size_t first)
 		char const * text = (char const *) fonts[i].elfe.elfFullName;
 		size_t const text_len = strlen(text);
 
-		int const next_y = y + fonts[i].elfe.elfLogFont.lfHeight;
+		int const next_y = y + fonts[i].elfe.elfLogFont.lfHeight + row_spacing;
 
 		if (next_y > cutoff.cy) break;
 
@@ -294,7 +294,9 @@ void FontRenderWorker::draw_fonts_ex(size_t first)
 		lib::font::EnumFontInfoLoader efil(offscreen.handle, fonts[i]);
 
 		RECT text_rc = {client_padding.cx, y, 0, 0};
+		draw_cache.get_size(text_rc, i, offscreen.handle, text, text_len);
 		on_draw_font(offscreen.handle, i, text_rc, text, text_len);
+		draw_frame(offscreen.handle, text_rc, frame_padding, RGB(100,100,100));
 
 		y = next_y;
 	}
@@ -302,7 +304,6 @@ void FontRenderWorker::draw_fonts_ex(size_t first)
 
 void FontRenderWorker::draw_fonts(size_t skip)
 {
-	draw_cache.ensure_capacity(fonts);
 	rid.set_digits_from_max_index(fonts.size());
 
 	SIZE client_size;

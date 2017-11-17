@@ -29,12 +29,14 @@ struct FontRenderWorker
 	size_t count_rendered = 0;
 
 	/// The extra space between columns and rows .
-	int const row_spacing = 0;
+	int const row_spacing = 12;
 	int const col_spacing = 16;
 
 	/// Extra space between frames and contents .
 	SIZE const client_padding = {8, 8};
-	SIZE const frame_padding = {2 , 2};
+	SIZE const frame_padding = {3 , 3};
+
+	FontDrawCache draw_cache;
 
 	struct Job
 	{
@@ -66,7 +68,6 @@ private:
 	window::BackgroundDC offscreen;
 	std::vector<font::EnumFontInfo> & fonts;
 
-	FontDrawCache draw_cache;
 	snippets::RowIndexDrawer rid;
 
 	bool recalcFontSizes = false;
