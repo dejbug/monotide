@@ -1,4 +1,7 @@
-#pragma once
+#ifndef MONOTIDE_LIB_WINDOW_H
+#define MONOTIDE_LIB_WINDOW_H
+
+#include <tchar.h>
 #include <windows.h>
 
 namespace lib {
@@ -35,11 +38,11 @@ int run_main_loop(MSG &);
 
 void init_class(WNDCLASSEX & wc);
 ATOM create_class(WNDCLASSEX & wc);
-ATOM create_class(LPCSTR clsname, WNDPROC);
-ATOM create_class(LPCSTR clsname, WNDPROC, HINSTANCE);
+ATOM create_class(LPCTSTR clsname, WNDPROC);
+ATOM create_class(LPCTSTR clsname, WNDPROC, HINSTANCE);
 
-HWND create_frame(LPCSTR clsname, HINSTANCE=nullptr);
-HWND create_child(HWND parent, UINT id, LPCSTR clsname, HINSTANCE=nullptr);
+HWND create_frame(LPCTSTR clsname, HINSTANCE=nullptr);
+HWND create_child(HWND parent, UINT id, LPCTSTR clsname, HINSTANCE=nullptr);
 
 void set_size(HWND, int width, int height);
 void set_pos(HWND, int x, int y);
@@ -48,8 +51,9 @@ void center_to_parent(HWND);
 void get_inner_size(HWND, SIZE &);
 void get_outer_size(HWND, SIZE &);
 
-void quick_draw(HDC, int x, int y,
-	char const * text, int text_len, int text_height, COLORREF);
+void quick_draw(HDC, int x, int y, LPCTSTR text, int text_len, int text_height, COLORREF);
 
 }
 }
+
+#endif // !MONOTIDE_LIB_WINDOW_H

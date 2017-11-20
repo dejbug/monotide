@@ -1,4 +1,7 @@
-#pragma once
+#ifndef MONOTIDE_LIB_FONT_H
+#define MONOTIDE_LIB_FONT_H
+
+#include <tchar.h>
 #include <windows.h>
 #include <vector>
 
@@ -43,3 +46,5 @@ int get_sysfont_height();
 
 }
 }
+
+#endif // !MONOTIDE_LIB_FONT_H

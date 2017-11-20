@@ -1,4 +1,7 @@
-#pragma once
+#ifndef MONOTIDE_APP_FONTRENDERER_H
+#define MONOTIDE_APP_FONTRENDERER_H
+
+#include <tchar.h>
 #include <windows.h>
 #include <vector>
 #include "lib_worker.h"
@@ -15,7 +18,7 @@ struct FontDrawCache
 	void ensure_capacity(std::vector<font::EnumFontInfo> &);
 	void precalc(std::vector<font::EnumFontInfo> &,
 		long preferredFontHeight=0);
-	void get_size(OUT RECT &, size_t index, HDC, char const *, size_t);
+	void get_size(OUT RECT &, size_t index, HDC, LPCTSTR, size_t);
 };
 
 struct FontRenderWorker
@@ -53,7 +56,7 @@ struct FontRenderWorker
 
 	void queue(size_t);
 
-	char const * get_msg() const;
+	LPCTSTR get_msg() const;
 
 	size_t get_page_next_count() const;
 	size_t get_page_prev_count() const;
@@ -63,7 +66,7 @@ private:
 	HANDLE queue_event;
 	std::vector<Job> jobs;
 
-	char const * msg = nullptr;
+	LPCTSTR msg = nullptr;
 
 	window::BackgroundDC offscreen;
 	std::vector<font::EnumFontInfo> & fonts;
@@ -78,3 +81,5 @@ private:
 
 	void task();
 };
+
+#endif // !MONOTIDE_APP_FONTRENDERER_H

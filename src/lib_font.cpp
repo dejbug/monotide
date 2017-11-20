@@ -38,7 +38,7 @@ struct ListFontsContext
 };
 
 int CALLBACK list_fonts_cb(
-		LOGFONTA const * lpelf, TEXTMETRICA const * lptm,
+		LOGFONT const * lpelf, TEXTMETRIC const * lptm,
 		long unsigned int fontType, LPARAM lParam)
 {
 	ENUMLOGFONTEX const * lpelfe = (ENUMLOGFONTEX const *) lpelf;
@@ -94,7 +94,7 @@ void lib::font::print_font_info(lib::font::EnumFontInfo & efi)
 		case TRUETYPE_FONTTYPE: ft = "ttf"; break;
 	}
 
-	printf("%s | %s | %s | %d | %s\n", ft,
+	_tprintf(_T("%s | %s | %s | %d | %s\n"), ft,
 		efi.elfe.elfLogFont.lfFaceName,
 		efi.elfe.elfStyle,
 		efi.elfe.elfLogFont.lfCharSet,
@@ -103,13 +103,12 @@ void lib::font::print_font_info(lib::font::EnumFontInfo & efi)
 
 void lib::font::draw_font_label(HDC dc, RECT & rc, EnumFontInfo & fi)
 {
-	char const * text = (char const *) fi.elfe.elfFullName;
-	size_t const text_len = strlen(text);
+	LPCTSTR text = (LPCTSTR) fi.elfe.elfFullName;
+	size_t const text_len = _tcslen(text);
 
 	lib::font::EnumFontInfoLoader efil(dc, fi);
 
-	ExtTextOut(dc, rc.left, rc.top,
-		0, nullptr, text, text_len, nullptr);
+	ExtTextOut(dc, rc.left, rc.top, 0, nullptr, text, text_len, nullptr);
 }
 
 int lib::font::get_sysfont_height()

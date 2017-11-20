@@ -123,6 +123,7 @@ int lib::window::run_main_loop(MSG & msg)
 		int res = GetMessage(&msg, nullptr, 0, 0);
 		if (0 == res) break; // WM_QUIT
 		else if (-1 == res) return -1; // errors!
+		if (IsDialogMessage(msg.hwnd, &msg)) continue;
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
@@ -157,13 +158,12 @@ ATOM lib::window::create_class(WNDCLASSEX & wc)
 	return RegisterClassEx(&wc);
 }
 
-ATOM lib::window::create_class(LPCSTR name, WNDPROC callback)
+ATOM lib::window::create_class(LPCTSTR name, WNDPROC callback)
 {
-	return create_class(name, callback,
-		GetModuleHandle(nullptr));
+	return create_class(name, callback, GetModuleHandle(nullptr));
 }
 
-ATOM lib::window::create_class(LPCSTR name, WNDPROC callback,
+ATOM lib::window::create_class(LPCTSTR name, WNDPROC callback,
 		HINSTANCE i)
 {
 	WNDCLASSEX wc;
@@ -176,13 +176,13 @@ ATOM lib::window::create_class(LPCSTR name, WNDPROC callback,
 	return RegisterClassEx(&wc);
 }
 
-HWND lib::window::create_frame(LPCSTR name, HINSTANCE i)
+HWND lib::window::create_frame(LPCTSTR name, HINSTANCE i)
 {
 	return CreateWindowEx(
 		WS_EX_OVERLAPPEDWINDOW|WS_EX_ACCEPTFILES|
 			WS_EX_CONTEXTHELP|WS_EX_CONTROLPARENT,
 		name,
-		"",
+		_T(""),
 		WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN,
 		CW_USEDEFAULT, CW_USEDEFAULT,
 		CW_USEDEFAULT, CW_USEDEFAULT,
@@ -193,13 +193,13 @@ HWND lib::window::create_frame(LPCSTR name, HINSTANCE i)
 	);
 }
 
-HWND lib::window::create_child(HWND parent, UINT id, LPCSTR name,
+HWND lib::window::create_child(HWND parent, UINT id, LPCTSTR name,
 		HINSTANCE i)
 {
 	return CreateWindowEx(
 		WS_EX_OVERLAPPEDWINDOW,
 		name,
-		"",
+		_T(""),
 		WS_CHILD|WS_CLIPSIBLINGS|WS_TABSTOP,
 		CW_USEDEFAULT, CW_USEDEFAULT,
 		CW_USEDEFAULT, CW_USEDEFAULT,
@@ -265,10 +265,10 @@ void lib::window::get_inner_size(HWND h, SIZE & s)
 	s.cy = r.bottom - r.top;
 }
 
-void lib::window::quick_draw(HDC dc, int x, int y, char const * text,
+void lib::window::quick_draw(HDC dc, int x, int y, LPCTSTR text,
 		int text_len, int text_height, COLORREF text_color)
 {
-	if (text_len < 0) text_len = strlen(text);
+	if (text_len < 0) text_len = _tcslen(text);
 	HFONT hf = CreateFont(text_height, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_SWISS, nullptr);
 
 	SaveDC(dc);

@@ -26,8 +26,8 @@ void FontDrawCache::precalc(std::vector<font::EnumFontInfo> & fonts,
 
 	for (size_t i=0; i<fonts.size(); ++i)
 	{
-		char const * text = (char const *) fonts[i].elfe.elfFullName;
-		size_t const text_len = strlen(text);
+		LPCTSTR text = (LPCTSTR) fonts[i].elfe.elfFullName;
+		size_t const text_len = _tcslen(text);
 
 		if (preferredFontHeight)
 		{
@@ -49,7 +49,7 @@ void FontDrawCache::precalc(std::vector<font::EnumFontInfo> & fonts,
 }
 
 void FontDrawCache::get_size(RECT & rc, size_t index, HDC dc,
-		char const * text, size_t text_len)
+		LPCTSTR text, size_t text_len)
 {
 	if(!sizes[index].cx || !sizes[index].cy)
 	{
@@ -114,8 +114,8 @@ void FontRenderWorker::task()
 	EnterCriticalSection(&mutex);
 	if (!jobs.empty())
 	{
-		if (!msg || !*msg) msg = "rendering...";
-		else msg = "still rendering... ( stop scrolling! :)";
+		if (!msg || !*msg) msg = _T("rendering...");
+		else msg = _T("still rendering... ( stop scrolling! :)");
 
 #ifdef FR_DEBUG_SLOW_DRAW
 		PostMessage(hwnd, WM_FR_MESSAGE_UPDATE, 0, 0);
@@ -132,7 +132,7 @@ void FontRenderWorker::task()
 
 	if (skip)
 	{
-		msg = "";
+		msg = _T("");
 		if (needs_flip)
 		{
 			offscreen.flip();
@@ -148,7 +148,7 @@ void FontRenderWorker::task()
 	}
 
 #ifndef NDEBUG
-	printf(" [ jobs dropped ] %d\n", jobs_dropped);
+	_tprintf(_T(" [ jobs dropped ] %d\n"), jobs_dropped);
 #endif
 
 #ifdef FR_DEBUG_SLOW_DRAW
@@ -177,9 +177,9 @@ void FontRenderWorker::queue(size_t index)
 	SetEvent(queue_event);
 }
 
-char const * FontRenderWorker::get_msg() const
+LPCTSTR FontRenderWorker::get_msg() const
 {
-	return msg ? msg : "";
+	return msg ? msg : _T("");
 }
 
 size_t FontRenderWorker::get_page_next_count() const
@@ -204,7 +204,7 @@ void draw_frame(HDC dc, RECT & text_rc, SIZE const & frame_padding,
 }
 
 void on_draw_font(HDC dc, size_t i,
-		RECT & rc, char const * text, size_t text_len)
+		RECT & rc, LPCTSTR text, size_t text_len)
 {
 	// PRINT_VAR(text, "%s");
 	TextOut(dc, rc.left, rc.top, text, text_len);
@@ -233,12 +233,12 @@ void FontRenderWorker::draw_fonts_ex_backward(size_t first)
 	{
 		if (!jobs.empty())
 		{
-			printf("jobs added while rendering last job\n");
+			_tprintf(_T("jobs added while rendering last job\n"));
 			break;
 		}
 
-		char const * text = (char const *) fonts[i].elfe.elfFullName;
-		size_t const text_len = strlen(text);
+		LPCTSTR text = (LPCTSTR) fonts[i].elfe.elfFullName;
+		size_t const text_len = _tcslen(text);
 
 		int const next_y = y - fonts[i].elfe.elfLogFont.lfHeight;
 
@@ -279,8 +279,8 @@ void FontRenderWorker::draw_fonts_ex(size_t first)
 			break;
 		}
 
-		char const * text = (char const *) fonts[i].elfe.elfFullName;
-		size_t const text_len = strlen(text);
+		LPCTSTR text = (LPCTSTR) fonts[i].elfe.elfFullName;
+		size_t const text_len = _tcslen(text);
 
 		int const next_y = y + fonts[i].elfe.elfLogFont.lfHeight + row_spacing;
 
@@ -320,8 +320,8 @@ void FontRenderWorker::draw_fonts(size_t skip)
 
 	for (size_t i=skip; i<fonts.size(); ++i, ++count_rendered)
 	{
-		char const * text = (char const *) fonts[i].elfe.elfFullName;
-		size_t const text_len = strlen(text);
+		LPCTSTR text = (LPCTSTR) fonts[i].elfe.elfFullName;
+		size_t const text_len = _tcslen(text);
 
 		/// Select this font into the device context, so we can
 		/// measure it, etc. .

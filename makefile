@@ -16,13 +16,14 @@ endef
 # TARGET := release
 TARGET := debug
 WINLIBS := gdi32
+SYMBOLS := WIN32_LEAN_AND_MEAN STRICT UNICODE _UNICODE
 
 CXX := g++
 
 CXXFLAGS :=
 CXXFLAGS += -std=c++11 -Wall -pedantic
+CXXFLAGS += $(addprefix -D,$(SYMBOLS))
 CXXFLAGS += $(addprefix -l,$(WINLIBS))
-CXXFLAGS += -DWIN32_LEAN_AND_MEAN -DSTRICT
 
 ifeq ($(TARGET),release)
 CXXFLAGS += -O2
@@ -40,6 +41,7 @@ all: build/monotide.exe
 
 build: ; $(call MKDIR,build)
 
+build/monotide.exe: build/fontlist.o
 build/monotide.exe: build/snippets.o
 build/monotide.exe: build/lib_worker.o
 build/monotide.exe: build/lib_window.o
@@ -57,6 +59,9 @@ build/app_%.o: src/app_%.cpp src/app_%.h ; $(call cmpl,$@,$^)
 build/lib_%.o: src/lib_%.cpp src/lib_%.h ; $(call cmpl,$@,$^)
 
 build/%.o: src/%.cpp ; $(call cmpl,$@,$^)
+
+build/main.o : src/main.cpp src/lib_window.h src/fontlist.h
+build/fontlist.o : src/fontlist.cpp src/fontlist.h
 
 .PHONY: clean
 clean:

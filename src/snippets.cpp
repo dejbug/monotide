@@ -10,7 +10,7 @@
 #include <math.h>
 
 void snippets::calc_text_rect_2(RECT & rc, HDC dc,
-		char const * text, size_t text_len)
+		LPCTSTR text, size_t text_len)
 {
 	SIZE text_size;
 	GetTextExtentPoint32(dc, text, text_len, &text_size);
@@ -20,7 +20,7 @@ void snippets::calc_text_rect_2(RECT & rc, HDC dc,
 
 void snippets::calc_text_rect_1(RECT & rc, HDC dc,
 		lib::font::EnumFontInfo & fi,
-		char const * text, size_t text_len)
+		LPCTSTR text, size_t text_len)
 {
 	lib::font::EnumFontInfoLoader efil(dc, fi);
 
@@ -90,7 +90,7 @@ void snippets::ScrollBar::update()
 }
 
 snippets::RowIndexDrawer::RowIndexDrawer()
-		: format{"%3d"}, buffer{0}
+		: format{_T("%3d")}, buffer{0}
 {
 	HDC dc = GetDC(nullptr);
 	SelectObject(dc, GetStockObject(ANSI_FIXED_FONT));
@@ -105,8 +105,8 @@ int snippets::RowIndexDrawer::get_height(float scale) const
 
 void snippets::RowIndexDrawer::set_digits(unsigned count)
 {
-	_snprintf(format, sizeof(format),
-		count >= 2 ? "%%%dd" : "%%d", count);
+	_sntprintf(format, sizeof(format),
+		count >= 2 ? _T("%%%dd") : _T("%%d"), count);
 }
 
 void snippets::RowIndexDrawer::set_digits_from_max_index(size_t index)
@@ -117,20 +117,20 @@ void snippets::RowIndexDrawer::set_digits_from_max_index(size_t index)
 }
 
 void snippets::RowIndexDrawer::draw(HDC dc, RECT & rc,
-		int index, char const * format)
+		int index, LPCTSTR format)
 {
 	if (!format || !*format) format = this->format;
-	_snprintf(buffer, sizeof(buffer), format, index);
+	_sntprintf(buffer, sizeof(buffer), format, index);
 
 	SetBkMode(dc, TRANSPARENT);
 	HGDIOBJ old_font = SelectObject(dc, GetStockObject(ANSI_FIXED_FONT));
-	text_draw_2(dc, rc, buffer, strlen(buffer));
+	text_draw_2(dc, rc, buffer, _tcslen(buffer));
 	SelectObject(dc, old_font);
 	SetBkMode(dc, OPAQUE);
 }
 
 void snippets::text_draw_1(HDC dc, RECT & rc,
-		char const * text, size_t text_len)
+		LPCTSTR text, size_t text_len)
 {
 	RECT tr = {rc.left, rc.top, 0, 0};
 	calc_text_rect_2(tr, dc, text, text_len);
@@ -149,7 +149,7 @@ void snippets::text_draw_1(HDC dc, RECT & rc,
 }
 
 void snippets::text_draw_2(HDC dc, RECT & rc,
-		char const * text, size_t text_len)
+		LPCTSTR text, size_t text_len)
 {
 	calc_text_rect_2(rc, dc, text, text_len);
 	TextOut(dc, rc.left, rc.top, text, text_len);
