@@ -5,7 +5,6 @@
 #include <stdexcept>
 #include <vector>
 #include "common.h"
-#include "macros.h"
 #include "snippets.h"
 #include "lib_window.h"
 #include "lib_font.h"
@@ -31,7 +30,7 @@ static snippets::ScrollBar vbar(SB_VERT);
 static FontRenderWorker font_renderer(fonts);
 
 
-static bool wm_create(HWND h, LPCREATESTRUCT cs)
+static bool wm_create(HWND h, LPCREATESTRUCT /*cs*/)
 {
 	vbar.parent = h;
 	font_renderer.hwnd = h;
@@ -78,7 +77,7 @@ static void wm_paint(HWND h)
 	font_renderer.queue(vbar.index);
 }
 
-static void wm_keydown(HWND h, UINT key, BOOL, int repeatCount, UINT flags)
+static void wm_keydown(HWND h, UINT key, BOOL, int /*repeatCount*/, UINT /*flags*/)
 {
 	switch(key)
 	{
@@ -107,7 +106,7 @@ static void wm_keydown(HWND h, UINT key, BOOL, int repeatCount, UINT flags)
 	}
 }
 
-static void wm_vscroll(HWND h, HWND bar, UINT nScrollCode, int nPos)
+static void wm_vscroll(HWND h, HWND /*bar*/, UINT nScrollCode, int nPos)
 {
 	switch(nScrollCode)
 	{
@@ -157,7 +156,7 @@ static void wm_nclbuttondown(HWND h, BOOL dblclk, int x, int y, UINT nHittest)
 	FORWARD_WM_NCLBUTTONDOWN(h, dblclk, x, y, nHittest, DefWindowProc);
 }
 
-static void wm_mousewheel(HWND h, int x, int y, int zDelta, UINT fwKeys)
+static void wm_mousewheel(HWND h, int /*x*/, int /*y*/, int zDelta, UINT /*fwKeys*/)
 {
 	if (zDelta > 0 && vbar.scroll(-rows_per_scroll))
 		InvalidateRect(h, NULL, TRUE);
@@ -166,13 +165,13 @@ static void wm_mousewheel(HWND h, int x, int y, int zDelta, UINT fwKeys)
 		InvalidateRect(h, NULL, TRUE);
 }
 
-static void wm_size(HWND h, UINT fwSizeType , int cx, int cy)
+static void wm_size(HWND h, UINT /*fwSizeType*/ , int /*cx*/, int /*cy*/)
 {
 	font_renderer.on_parent_resize();
 	InvalidateRect(h, NULL, TRUE);
 }
 
-static void wm_destroy(HWND h)
+static void wm_destroy(HWND)
 {
 	font_renderer.stop();
 #ifdef FR_WAIT_AT_EXIT
@@ -240,7 +239,7 @@ static LRESULT CALLBACK Callback(HWND h, UINT m, WPARAM wParam, LPARAM lParam)
 
 void RegisterFontList()
 {
-	WNDCLASSEX wc = {0};
+	WNDCLASSEX wc;
 	lib::window::init_class(wc);
 
     // wc.style |= CS_GLOBALCLASS;

@@ -2,37 +2,47 @@
 SHELL := cmd.exe
 
 define MKDIR
-@echo -- creating dir "$(1)"
-@IF NOT EXIST $(1) mkdir $(1)
-@echo -- dir "$(1)" created
+@echo -- creating dir "$1"
+@IF NOT EXIST $1 mkdir $1
+@echo -- dir "$1" created
 endef
 
-define F_DEL_TREE
-@echo -- removing dir "$(1)"
-@IF EXIST $(1) ( RMDIR /S /Q $(1) )
-@echo -- dir "$(1)" removed
+define DELTREE
+@echo -- removing dir "$1"
+@IF EXIST $1 ( RMDIR /S /Q $1 )
+@echo -- dir "$1" removed
 endef
 
-# TARGET := release
+define COMPILE
+$(CXX) -c $(filter %.cpp,$2) -o $1 $(CXXFLAGS)
+endef
+
+define LINK
+$(CXX) $(filter %.o %.a,$2) -o $1 $(CXXFLAGS) $(LDFLAGS)
+endef
+
+PRECISE := 0
 TARGET := debug
-WINLIBS := gdi32
 SYMBOLS := WIN32_LEAN_AND_MEAN STRICT UNICODE _UNICODE
+WINLIBS := gdi32
 
 CXX := g++
 
 CXXFLAGS :=
-CXXFLAGS += -std=c++11 -Wall -pedantic
+CXXFLAGS += -std=c++11 -Wall -Wextra -pedantic
 CXXFLAGS += $(addprefix -D,$(SYMBOLS))
-CXXFLAGS += $(addprefix -l,$(WINLIBS))
+
+LDFLAGS :=
+LDFLAGS += $(addprefix -l,$(WINLIBS))
 
 ifeq ($(TARGET),release)
 CXXFLAGS += -O2
-CXXFLAGS += -Wl,--subsystem=windows
 CXXFLAGS += -DNDEBUG
+LDFLAGS += -Wl,--subsystem=windows
 else
 # CXXFLAGS += -g -O
 CXXFLAGS += -g
-CXXFLAGS += -Wl,--subsystem=console
+LDFLAGS += -Wl,--subsystem=console
 endif
 
 .PHONY: all
@@ -41,34 +51,36 @@ all: build/monotide.exe
 
 build: ; $(call MKDIR,build)
 
-build/monotide.exe: build/main.o
+build/%.target : src/%.cpp | build
+	g++ -MF $@ -MM $< -MT $(subst .target,.o,$@)
+	TYPE $(subst /,\\,$@) >> build\.target
+
+build/.target : $(patsubst src/%.cpp,build/%.target,$(wildcard src/*.cpp))
+
+ifeq ($(PRECISE),0)
+else
+include build/.target
+endif
+
+OBJ := $(patsubst src/%.cpp,build/%.o,$(wildcard src/*.cpp))
+
+build/monotide.exe: $(OBJ)
 build/monotide.exe: build/resource.o
-build/monotide.exe: build/fontlist.o
-build/monotide.exe: build/snippets.o
-build/monotide.exe: build/lib_worker.o
-build/monotide.exe: build/lib_window.o
-build/monotide.exe: build/lib_font.o
-build/monotide.exe: build/app_fontrenderer.o
-build/monotide.exe: ; $(CXX) $^ -o $@ $(CXXFLAGS)
+# build/monotide.exe: ; $(CXX) $^ -o $@ $(CXXFLAGS) $(LDFLAGS)
+build/monotide.exe: ; $(call LINK,$@,$^)
 
-define cmpl
-$(CXX) -c $(filter %.cpp,$2) -o $1 $(CXXFLAGS)
-endef
-
-build/snippets.o: src/snippets.cpp src/snippets.h ; $(call cmpl,$@,$^)
-build/app_%.o: src/app_%.cpp src/app_%.h ; $(call cmpl,$@,$^)
-build/lib_%.o: src/lib_%.cpp src/lib_%.h ; $(call cmpl,$@,$^)
-
-build/%.o: src/%.cpp ; $(call cmpl,$@,$^)
-
-build/main.o : src/main.cpp src/lib_window.h src/fontlist.h
-build/fontlist.o : src/fontlist.cpp src/fontlist.h
-build/resource.o : src/main.rc ; windres $< $@
+build/%.o: src/%.cpp ; $(call COMPILE,$@,$^)
+build/resource.o : src/main.rc src/resource.h ; windres $< $@
 
 .PHONY: clean
 clean:
-	$(call F_DEL_TREE,build)
+	$(call DELTREE,build)
+
+.PHONY: reset
+reset:
+	$(call DELTREE,build)
+	$(call DELTREE,deploy)
 
 .PHONY: run
-run: build build/monotide.exe
+run: all
 	@build\monotide.exe

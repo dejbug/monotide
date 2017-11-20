@@ -77,7 +77,6 @@ private:
 
 	void draw_fonts(size_t);
 	void draw_fonts_ex(size_t first);
-	void draw_fonts_ex_backward(size_t first);
 
 	void task();
 };

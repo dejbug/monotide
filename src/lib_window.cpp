@@ -1,5 +1,5 @@
 #include "lib_window.h"
-#include "macros.h"
+// #include "macros.h"
 
 lib::window::BackgroundDC::BackgroundDC(HDC parent)
 		: error(E_OK), parent(parent), handle(nullptr), bmp(nullptr)

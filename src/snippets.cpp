@@ -3,7 +3,6 @@
 	available documentation of my thought process than git logs .
 */
 #include "snippets.h"
-#include "macros.h"
 #include "lib_window.h"
 
 #include <stdio.h>

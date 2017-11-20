@@ -9,19 +9,19 @@ using namespace lib;
 
 HWND hFontList = nullptr;
 
-bool wm_create(HWND h, LPCREATESTRUCT cs)
+bool wm_create(HWND h, LPCREATESTRUCT /*cs*/)
 {
 	hFontList = CreateWindow(WC_FONTLIST, _T("FontList"), WS_CHILD | WS_VISIBLE, 10, 10, 500, 700, h, (HMENU) IDC_FONTLIST, GetModuleHandle(nullptr), nullptr);
 	SetFocus(hFontList);
 	return true;
 }
 
-void wm_destroy(HWND h)
+void wm_destroy(HWND)
 {
 	PostQuitMessage(0);
 }
 
-void wm_size(HWND h, UINT fwSizeType , int cx, int cy)
+void wm_size(HWND h, UINT /*fwSizeType*/ , int /*cx*/, int /*cy*/)
 {
 	InvalidateRect(h, NULL, TRUE);
 }
@@ -39,11 +39,11 @@ void wm_paint(HWND h)
 	EndPaint(h, &ps);
 }
 
-void wm_mousewheel(HWND h, int x, int y, int zDelta, UINT fwKeys)
+void wm_mousewheel(HWND, int /*x*/, int /*y*/, int /*zDelta*/, UINT /*fwKeys*/)
 {
 }
 
-void wm_keydown(HWND h, UINT key, BOOL, int repeatCount, UINT flags)
+void wm_keydown(HWND h, UINT key, BOOL, int /*repeatCount*/, UINT /*flags*/)
 {
 	switch(key)
 	{
@@ -58,11 +58,11 @@ void wm_keydown(HWND h, UINT key, BOOL, int repeatCount, UINT flags)
 	}
 }
 
-void wm_vscroll(HWND h, HWND bar, UINT nScrollCode, int nPos)
+void wm_vscroll(HWND, HWND /*bar*/, UINT /*nScrollCode*/, int /*nPos*/)
 {
 }
 
-void wm_command(HWND h, int id, HWND ctrl, UINT code)
+void wm_command(HWND h, int id, HWND /*ctrl*/, UINT code)
 {
 	/// -- handle accelerators.
 	if (1 == code) switch (id)
