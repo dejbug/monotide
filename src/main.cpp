@@ -1,19 +1,29 @@
 #include <tchar.h>
 #include <windows.h>
 #include <windowsx.h>
+#include "resource.h"
 #include "lib_window.h"
 #include "fontlist.h"
 
 using namespace lib;
 
 HWND hFontList = nullptr;
-UINT IDC_FONTLIST = 100;
 
 bool wm_create(HWND h, LPCREATESTRUCT cs)
 {
 	hFontList = CreateWindow(WC_FONTLIST, _T("FontList"), WS_CHILD | WS_VISIBLE, 10, 10, 500, 700, h, (HMENU) IDC_FONTLIST, GetModuleHandle(nullptr), nullptr);
 	SetFocus(hFontList);
 	return true;
+}
+
+void wm_destroy(HWND h)
+{
+	PostQuitMessage(0);
+}
+
+void wm_size(HWND h, UINT fwSizeType , int cx, int cy)
+{
+	InvalidateRect(h, NULL, TRUE);
 }
 
 void wm_paint(HWND h)
@@ -29,12 +39,16 @@ void wm_paint(HWND h)
 	EndPaint(h, &ps);
 }
 
+void wm_mousewheel(HWND h, int x, int y, int zDelta, UINT fwKeys)
+{
+}
+
 void wm_keydown(HWND h, UINT key, BOOL, int repeatCount, UINT flags)
 {
 	switch(key)
 	{
 		case VK_ESCAPE:
-			SendMessage(h, WM_CLOSE, 0, 0);
+			window::close_window(h);
 			break;
 
 		case VK_F5:
@@ -48,23 +62,24 @@ void wm_vscroll(HWND h, HWND bar, UINT nScrollCode, int nPos)
 {
 }
 
+void wm_command(HWND h, int id, HWND ctrl, UINT code)
+{
+	/// -- handle accelerators.
+	if (1 == code) switch (id)
+	{
+		case IDM_ESCAPE:
+			window::close_window(h);
+			break;
+
+		case IDM_F8:
+			_tprintf(_T("hello accelerator!\n"));
+			break;
+	}
+}
+
 void wm_nclbuttondown(HWND h, BOOL dblclk, int x, int y, UINT nHittest)
 {
 	FORWARD_WM_NCLBUTTONDOWN(h, dblclk, x, y, nHittest, DefWindowProc);
-}
-
-void wm_mousewheel(HWND h, int x, int y, int zDelta, UINT fwKeys)
-{
-}
-
-void wm_size(HWND h, UINT fwSizeType , int cx, int cy)
-{
-	InvalidateRect(h, NULL, TRUE);
-}
-
-void wm_destroy(HWND h)
-{
-	PostQuitMessage(0);
 }
 
 LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM wParam, LPARAM lParam)
@@ -83,6 +98,7 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM wParam, LPARAM lParam)
 		HANDLE_MSG(h, WM_MOUSEWHEEL, wm_mousewheel);
 		HANDLE_MSG(h, WM_KEYDOWN, wm_keydown);
 		HANDLE_MSG(h, WM_VSCROLL, wm_vscroll);
+		HANDLE_MSG(h, WM_COMMAND, wm_command);
 		HANDLE_MSG(h, WM_NCLBUTTONDOWN, wm_nclbuttondown);
 	}
 }
@@ -105,6 +121,7 @@ int WINAPI WinMain(HINSTANCE i, HINSTANCE, LPSTR, int iCmdShow)
 	UpdateWindow(frame);
 
 	MSG msg;
-	window::run_main_loop(msg);
+	HACCEL haccel = LoadAccelerators(i, _T("accel_main"));
+	window::run_main_loop(msg, frame, haccel);
 	return msg.wParam;
 }

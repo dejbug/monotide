@@ -41,13 +41,14 @@ all: build/monotide.exe
 
 build: ; $(call MKDIR,build)
 
+build/monotide.exe: build/main.o
+build/monotide.exe: build/resource.o
 build/monotide.exe: build/fontlist.o
 build/monotide.exe: build/snippets.o
 build/monotide.exe: build/lib_worker.o
 build/monotide.exe: build/lib_window.o
 build/monotide.exe: build/lib_font.o
 build/monotide.exe: build/app_fontrenderer.o
-build/monotide.exe: build/main.o
 build/monotide.exe: ; $(CXX) $^ -o $@ $(CXXFLAGS)
 
 define cmpl
@@ -62,6 +63,7 @@ build/%.o: src/%.cpp ; $(call cmpl,$@,$^)
 
 build/main.o : src/main.cpp src/lib_window.h src/fontlist.h
 build/fontlist.o : src/fontlist.cpp src/fontlist.h
+build/resource.o : src/main.rc ; windres $< $@
 
 .PHONY: clean
 clean:

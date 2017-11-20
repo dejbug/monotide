@@ -1,0 +1,8 @@
+#ifndef MONOTIDE_RESOURCE_H
+#define MONOTIDE_RESOURCE_H
+
+#define IDC_FONTLIST	1001
+#define IDM_ESCAPE		40001
+#define IDM_F8			40002
+
+#endif // !MONOTIDE_RESOURCE_H

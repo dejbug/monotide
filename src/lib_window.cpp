@@ -116,14 +116,15 @@ void lib::window::BackgroundDC::fill(COLORREF c)
 	SelectObject(handle, old_bru);
 }
 
-int lib::window::run_main_loop(MSG & msg)
+int lib::window::run_main_loop(MSG & msg, HWND main, HACCEL haccel)
 {
 	while (1)
 	{
-		int res = GetMessage(&msg, nullptr, 0, 0);
+		int const res = GetMessage(&msg, nullptr, 0, 0);
 		if (0 == res) break; // WM_QUIT
 		else if (-1 == res) return -1; // errors!
-		if (IsDialogMessage(msg.hwnd, &msg)) continue;
+		if (main && haccel) TranslateAccelerator(main, haccel, &msg);
+		if (main && IsDialogMessage(main, &msg)) continue;
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
@@ -279,4 +280,9 @@ void lib::window::quick_draw(HDC dc, int x, int y, LPCTSTR text,
 	RestoreDC(dc, -1);
 
 	DeleteObject(hf);
+}
+
+void lib::window::close_window(HWND h)
+{
+	SendMessage(h, WM_CLOSE, 0, 0);
 }

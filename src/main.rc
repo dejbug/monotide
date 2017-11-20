@@ -1,0 +1,9 @@
+#include "resource.h"
+#include <windows.h>
+
+accel_main ACCELERATORS DISCARDABLE
+BEGIN
+    VK_ESCAPE,  IDM_ESCAPE,     VIRTKEY
+    "X",        IDM_ESCAPE,     VIRTKEY, ALT
+    VK_F8,		IDM_F8,			VIRTKEY
+END

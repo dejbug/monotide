@@ -97,7 +97,7 @@ static void wm_keydown(HWND h, UINT key, BOOL, int repeatCount, UINT flags)
 		}
 
 		case VK_ESCAPE:
-			SendMessage(h, WM_CLOSE, 0, 0);
+			window::close_window(h);
 			break;
 
 		case VK_F5:

@@ -34,7 +34,7 @@ struct BackgroundDC
 	void fill(COLORREF c);
 };
 
-int run_main_loop(MSG &);
+int run_main_loop(MSG &, HWND main=nullptr, HACCEL haccel=nullptr);
 
 void init_class(WNDCLASSEX & wc);
 ATOM create_class(WNDCLASSEX & wc);
@@ -53,7 +53,9 @@ void get_outer_size(HWND, SIZE &);
 
 void quick_draw(HDC, int x, int y, LPCTSTR text, int text_len, int text_height, COLORREF);
 
-}
-}
+void close_window(HWND h);
+
+} // namespace window
+} // namespace lib
 
 #endif // !MONOTIDE_LIB_WINDOW_H
