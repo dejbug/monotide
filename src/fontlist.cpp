@@ -67,10 +67,9 @@ static void wm_paint(HWND h)
 	PAINTSTRUCT ps;
 	BeginPaint(h, &ps);
 
-	RECT client_rect;
-	GetClientRect(h, &client_rect);
-	FillRect(ps.hdc, &client_rect, (HBRUSH)(COLOR_MENU+1));
-	// PostMessage(h, WM_FR_MESSAGE_UPDATE, 0, 0);
+	// RECT client_rect;
+	// GetClientRect(h, &client_rect);
+	// FillRect(ps.hdc, &client_rect, (HBRUSH)(COLOR_MENU+1));
 
 	EndPaint(h, &ps);
 
@@ -111,13 +110,13 @@ static void wm_vscroll(HWND h, HWND /*bar*/, UINT nScrollCode, int nPos)
 	switch(nScrollCode)
 	{
 		case SB_LINEUP:
-			if (vbar.scroll(-1))
-				InvalidateRect(h, NULL, TRUE);
+			if (vbar.scroll(-1)) InvalidateRect(h, NULL, TRUE);
+			else InvalidateRect(h, NULL, FALSE);
 			break;
 
 		case SB_LINEDOWN:
-			if (vbar.scroll(+1))
-				InvalidateRect(h, NULL, TRUE);
+			if (vbar.scroll(+1)) InvalidateRect(h, NULL, TRUE);
+			else InvalidateRect(h, NULL, FALSE);
 			break;
 
 		case SB_PAGEUP:
@@ -219,7 +218,7 @@ static LRESULT CALLBACK Callback(HWND h, UINT m, WPARAM wParam, LPARAM lParam)
 		default: return DefWindowProc(h, m, wParam, lParam);
 
 		case WM_CLOSE: DestroyWindow(h); return 0;
-		case WM_ERASEBKGND: return 0;
+		// case WM_ERASEBKGND: return 0;
 
 		HANDLE_MSG(h, WM_CREATE, wm_create);
 		HANDLE_MSG(h, WM_DESTROY, wm_destroy);
