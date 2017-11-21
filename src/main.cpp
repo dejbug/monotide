@@ -11,7 +11,7 @@ HWND hFontList = nullptr;
 
 bool wm_create(HWND h, LPCREATESTRUCT /*cs*/)
 {
-	hFontList = CreateWindow(WC_FONTLIST, _T("FontList"), WS_CHILD | WS_VISIBLE, 10, 10, 500, 700, h, (HMENU) IDC_FONTLIST, GetModuleHandle(nullptr), nullptr);
+	hFontList = CreateWindow(WC_FONTLIST, _T("FontList"), WS_CHILD | WS_VISIBLE | WS_BORDER, 10, 10, 500, 600, h, (HMENU) IDC_FONTLIST, GetModuleHandle(nullptr), nullptr);
 	SetFocus(hFontList);
 	return true;
 }

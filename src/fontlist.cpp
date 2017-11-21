@@ -22,7 +22,7 @@ struct PrivateData
 bool const draw_while_thumb_tracking = false;
 bool const only_TTF = false;
 bool const precalc = true;
-LONG const preferredFontHeight = 48;
+LONG const preferredFontHeight = 46;
 
 static std::vector<font::EnumFontInfo> fonts;
 static UINT rows_per_scroll = 1;
