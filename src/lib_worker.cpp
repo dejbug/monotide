@@ -49,15 +49,6 @@ bool Worker::wait(DWORD msec) const
 	return WAIT_OBJECT_0 == WaitForSingleObject(handle, msec);
 }
 
-void Worker::task()
-{
-	Sleep(1000);
-#ifndef NDEBUG
-	printf(" [ worker %08x ] tick\n", (size_t) this);
-#endif
-	running = false;
-}
-
 DWORD Worker::run()
 {
 #ifndef NDEBUG

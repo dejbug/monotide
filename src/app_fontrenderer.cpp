@@ -74,11 +74,6 @@ FontRenderWorker::FontRenderWorker(
 		std::vector<font::EnumFontInfo> & fonts)
 		: hwnd(nullptr), fonts(fonts)
 {
-	InitializeCriticalSection(&mutex);
-	queue_event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	if (!queue_event) throw std::runtime_error("FontRenderWorker :"
-		" unable to create queue_event");
-
 	/// A row, at least, must accomodate the index (comfortably) .
 	/// The index is the row's "line number" drawn in column #0 .
 	if (!min_row_height)
@@ -90,8 +85,6 @@ FontRenderWorker::FontRenderWorker(
 
 FontRenderWorker::~FontRenderWorker()
 {
-	CloseHandle(queue_event);
-	DeleteCriticalSection(&mutex);
 }
 
 void FontRenderWorker::task()
@@ -111,8 +104,9 @@ void FontRenderWorker::task()
 	printf(" [ font renderer %08x ] tick\n", (size_t) this);
 #endif
 
-	EnterCriticalSection(&mutex);
-	if (!jobs.empty())
+	// EnterCriticalSection(&mutex);
+	Job * job = jobs.get_back();
+	if (job)
 	{
 		if (!msg || !*msg) msg = _T("rendering...");
 		else msg = _T("still rendering... ( stop scrolling! :)");
@@ -122,14 +116,14 @@ void FontRenderWorker::task()
 #endif
 
 #ifndef NDEBUG
-		jobs_dropped = jobs.size() - 1;
+		jobs_dropped = jobs.get_count() - 1;
 #endif
 
 		skip = false;
-		index = jobs.back().index;
+		index = job->index;
 		jobs.clear();
 	}
-	LeaveCriticalSection(&mutex);
+	// LeaveCriticalSection(&mutex);
 
 	_tprintf(_T("fr == index %d skip %s needs_flip %s\n"), index, skip ? _T("Y") : _T("N"), needs_flip ? _T("Y") : _T("N"));
 
@@ -146,9 +140,9 @@ void FontRenderWorker::task()
 		_tprintf(_T("\n"));
 
 #ifdef FR_DEBUG_TICK_DELAY
-		WaitForSingleObject(queue_event, FR_DEBUG_TICK_DELAY);
+		jobs.wait(FR_DEBUG_TICK_DELAY);
 #else
-		WaitForSingleObject(queue_event, INFINITE);
+		jobs.wait(INFINITE);
 #endif
 		return;
 	}
@@ -178,10 +172,7 @@ void FontRenderWorker::on_parent_resize()
 
 void FontRenderWorker::queue(size_t index)
 {
-	EnterCriticalSection(&mutex);
-	jobs.push_back(Job(index));
-	LeaveCriticalSection(&mutex);
-	SetEvent(queue_event);
+	jobs.push_back(new Job(index));
 }
 
 LPCTSTR FontRenderWorker::get_msg() const
@@ -235,7 +226,7 @@ void FontRenderWorker::draw_fonts_ex(size_t first)
 
 	for (size_t i=first; i<fonts.size(); ++i, ++count_rendered)
 	{
-		if (!jobs.empty())
+		if (!jobs.is_empty())
 		{
 			printf("jobs added while rendering last job\n");
 			break;

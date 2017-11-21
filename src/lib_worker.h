@@ -1,4 +1,6 @@
-#pragma once
+#ifndef MONOTIDE_LIB_WORKER_H
+#define MONOTIDE_LIB_WORKER_H
+
 #include <windows.h>
 
 namespace lib {
@@ -20,12 +22,14 @@ struct Worker
 	void stop();
 	bool wait(DWORD msec=INFINITE) const;
 
-	virtual void task();
+	virtual void task() = 0;
 	virtual DWORD run();
 
 private:
 	static DWORD WINAPI main(LPVOID);
 };
 
-}
-}
+} // namespace worker
+} // namespace lib
+
+#endif // !MONOTIDE_LIB_WORKER_H

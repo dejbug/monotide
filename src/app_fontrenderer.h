@@ -8,6 +8,7 @@
 #include "lib_window.h"
 #include "lib_font.h"
 #include "snippets.h"
+#include "EventQueue.hpp"
 
 using namespace lib;
 
@@ -42,13 +43,6 @@ struct FontRenderWorker
 
 	FontDrawCache draw_cache;
 
-	struct Job
-	{
-		size_t index;
-
-		Job(size_t);
-	};
-
 	FontRenderWorker(std::vector<font::EnumFontInfo> &);
 	virtual ~FontRenderWorker();
 
@@ -63,9 +57,19 @@ struct FontRenderWorker
 	size_t get_page_prev_count() const;
 
 private:
-	CRITICAL_SECTION mutex;
-	HANDLE queue_event;
-	std::vector<Job> jobs;
+	struct Job
+	{
+		size_t index;
+
+		Job(size_t);
+		virtual ~Job() { printf("~Job #%d\n", index); }
+	};
+
+	EventQueue<Job> jobs;
+
+	// CRITICAL_SECTION mutex;
+	// HANDLE queue_event;
+	// std::vector<Job> jobs;
 
 	LPCTSTR msg = nullptr;
 
