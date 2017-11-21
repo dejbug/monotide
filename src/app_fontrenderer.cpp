@@ -96,7 +96,7 @@ FontRenderWorker::~FontRenderWorker()
 
 void FontRenderWorker::task()
 {
-	// row_sizes.recalc();
+	_tprintf(_T("\n"));
 
 	static bool needs_flip = true;
 	bool skip = true;
@@ -124,20 +124,26 @@ void FontRenderWorker::task()
 #ifndef NDEBUG
 		jobs_dropped = jobs.size() - 1;
 #endif
+
 		skip = false;
 		index = jobs.back().index;
 		jobs.clear();
 	}
 	LeaveCriticalSection(&mutex);
 
+	_tprintf(_T("fr == index %d skip %s needs_flip %s\n"), index, skip ? _T("Y") : _T("N"), needs_flip ? _T("Y") : _T("N"));
+
 	if (skip)
 	{
+		_tprintf(_T("fr -- skipping"));
 		msg = _T("");
 		if (needs_flip)
 		{
+			_tprintf(_T(" & flipping"));
 			offscreen.flip();
 			needs_flip = false;
 		}
+		_tprintf(_T("\n"));
 
 #ifdef FR_DEBUG_TICK_DELAY
 		WaitForSingleObject(queue_event, FR_DEBUG_TICK_DELAY);
@@ -155,9 +161,11 @@ void FontRenderWorker::task()
 	Sleep(FR_DEBUG_SLOW_DRAW);
 #endif
 
+	_tprintf(_T("fr -- drawing\n"));
 	offscreen.clear(COLOR_MENU);
 	draw_fonts(index);
 	// draw_fonts_ex(index);
+	last_index_rendered = index;
 	needs_flip = true;
 }
 

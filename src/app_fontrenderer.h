@@ -30,6 +30,7 @@ struct FontRenderWorker
 
 	size_t first_index = 0;
 	size_t count_rendered = 0;
+	size_t last_index_rendered = (size_t) -1;
 
 	/// The extra space between columns and rows .
 	int const row_spacing = 12;
