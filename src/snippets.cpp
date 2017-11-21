@@ -52,7 +52,7 @@ bool snippets::ScrollBar::scroll(int steps, bool update)
 
 	size_t temp = index;
 
-	if (steps >= 0)
+	if (steps > 0)
 	{
 		if (count - index <= (size_t) steps)
 		{
@@ -63,7 +63,7 @@ bool snippets::ScrollBar::scroll(int steps, bool update)
 			temp += steps;
 		}
 	}
-	else
+	else if (steps < 0)
 	{
 		if (index <= (size_t) -steps)
 		{

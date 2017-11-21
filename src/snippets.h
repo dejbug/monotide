@@ -1,4 +1,6 @@
-#pragma once
+#ifndef MONOTIDE_SNIPPETS_H
+#define MONOTIDE_SNIPPETS_H
+
 #include <tchar.h>
 #include <windows.h>
 #include "lib_font.h"
@@ -46,6 +48,8 @@ namespace scroll {
 
 
 
-}
+} // namespace scroll
 
-}
+} // namespace snippets
+
+#endif // !MONOTIDE_SNIPPETS_H
