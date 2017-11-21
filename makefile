@@ -53,20 +53,15 @@ build: ; $(call MKDIR,build)
 
 build/%.target : src/%.cpp | build
 	g++ -MF $@ -MM $< -MT $(subst .target,.o,$@)
-	TYPE $(subst /,\\,$@) >> build\.target
 
-build/.target : $(patsubst src/%.cpp,build/%.target,$(wildcard src/*.cpp))
-
-ifeq ($(PRECISE),0)
-else
-include build/.target
+ifneq ($(PRECISE),0)
+include $(patsubst src/%.cpp,build/%.target,$(wildcard src/*.cpp))
 endif
 
 OBJ := $(patsubst src/%.cpp,build/%.o,$(wildcard src/*.cpp))
 
 build/monotide.exe: $(OBJ)
 build/monotide.exe: build/resource.o
-# build/monotide.exe: ; $(CXX) $^ -o $@ $(CXXFLAGS) $(LDFLAGS)
 build/monotide.exe: ; $(call LINK,$@,$^)
 
 build/%.o: src/%.cpp ; $(call COMPILE,$@,$^)
