@@ -9,7 +9,7 @@ using namespace lib;
 
 HWND hFontList = nullptr;
 
-bool wm_create(HWND h, LPCREATESTRUCT /*cs*/)
+bool wm_create(HWND h, LPCREATESTRUCT)
 {
 	hFontList = CreateWindow(WC_FONTLIST, _T("FontList"), WS_CHILD | WS_VISIBLE | WS_BORDER, 10, 10, 500, 600, h, (HMENU) IDC_FONTLIST, GetModuleHandle(nullptr), nullptr);
 	SetFocus(hFontList);
@@ -24,23 +24,6 @@ void wm_destroy(HWND)
 void wm_size(HWND h, UINT /*fwSizeType*/ , int /*cx*/, int /*cy*/)
 {
 	InvalidateRect(h, NULL, TRUE);
-}
-
-void wm_paint(HWND h)
-{
-	PAINTSTRUCT ps;
-	BeginPaint(h, &ps);
-
-	RECT client_rect;
-	GetClientRect(h, &client_rect);
-	FillRect(ps.hdc, &client_rect, (HBRUSH)(COLOR_MENU+1));
-	// PostMessage(h, WM_FR_MESSAGE_UPDATE, 0, 0);
-
-	EndPaint(h, &ps);
-}
-
-void wm_mousewheel(HWND, int /*x*/, int /*y*/, int /*zDelta*/, UINT /*fwKeys*/)
-{
 }
 
 void wm_keydown(HWND h, UINT key, BOOL, int /*repeatCount*/, UINT /*flags*/)
@@ -58,14 +41,11 @@ void wm_keydown(HWND h, UINT key, BOOL, int /*repeatCount*/, UINT /*flags*/)
 	}
 }
 
-void wm_vscroll(HWND, HWND /*bar*/, UINT /*nScrollCode*/, int /*nPos*/)
-{
-}
-
 void wm_command(HWND h, int id, HWND /*ctrl*/, UINT code)
 {
-	/// -- handle accelerators.
-	if (1 == code) switch (id)
+	UINT const is_accelerator = (1 == code);
+
+	if (is_accelerator) switch (id)
 	{
 		case IDM_ESCAPE:
 			window::close_window(h);
@@ -77,9 +57,9 @@ void wm_command(HWND h, int id, HWND /*ctrl*/, UINT code)
 	}
 }
 
-void wm_nclbuttondown(HWND h, BOOL dblclk, int x, int y, UINT nHittest)
+void wm_setfocus(HWND, HWND /*hwndLoseFocus*/)
 {
-	FORWARD_WM_NCLBUTTONDOWN(h, dblclk, x, y, nHittest, DefWindowProc);
+	SetFocus(hFontList);
 }
 
 LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM wParam, LPARAM lParam)
@@ -89,17 +69,14 @@ LRESULT CALLBACK MainFrameProc(HWND h, UINT m, WPARAM wParam, LPARAM lParam)
 		default: return DefWindowProc(h, m, wParam, lParam);
 
 		case WM_CLOSE: DestroyWindow(h); return 0;
-		case WM_ERASEBKGND: return 0;
+		// case WM_ERASEBKGND: return 0;
 
 		HANDLE_MSG(h, WM_CREATE, wm_create);
 		HANDLE_MSG(h, WM_DESTROY, wm_destroy);
 		HANDLE_MSG(h, WM_SIZE, wm_size);
-		HANDLE_MSG(h, WM_PAINT, wm_paint);
-		HANDLE_MSG(h, WM_MOUSEWHEEL, wm_mousewheel);
 		HANDLE_MSG(h, WM_KEYDOWN, wm_keydown);
-		HANDLE_MSG(h, WM_VSCROLL, wm_vscroll);
 		HANDLE_MSG(h, WM_COMMAND, wm_command);
-		HANDLE_MSG(h, WM_NCLBUTTONDOWN, wm_nclbuttondown);
+		HANDLE_MSG(h, WM_SETFOCUS, wm_setfocus);
 	}
 }
 
