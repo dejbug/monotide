@@ -122,6 +122,10 @@ void FontRenderWorker::task()
 		skip = false;
 		index = job->index;
 		jobs.clear();
+
+		bool const already_rendered = (index == last_index_rendered);
+
+		if (already_rendered) skip = needs_flip = true;
 	}
 	// LeaveCriticalSection(&mutex);
 
