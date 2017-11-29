@@ -15,6 +15,7 @@ using namespace lib;
 struct FontDrawCache
 {
 	std::vector<SIZE> sizes;
+	bool precalced = false;
 
 	void ensure_capacity(std::vector<font::EnumFontInfo> &);
 	void precalc(std::vector<font::EnumFontInfo> &,
@@ -84,6 +85,21 @@ private:
 	void draw_fonts_ex(size_t first);
 
 	void task();
+};
+
+struct Y_advance
+{
+	int const text_height = 0;
+	int const frame_height = 0;
+	int const row_height = 0;
+	int const row_height_collapsed = 0;
+	int const y = 0;
+
+	Y_advance(RECT text_rc, SIZE frame_padding, int min_row_height, int row_spacing) : text_height(text_rc.bottom - text_rc.top), frame_height(text_height + frame_padding.cy * 2), row_height(frame_height > min_row_height ? frame_height : min_row_height), row_height_collapsed(row_height - 1), y(row_height_collapsed + row_spacing)
+	{}
+
+	Y_advance(int text_height, SIZE frame_padding, int min_row_height, int row_spacing) : text_height(text_height), frame_height(text_height + frame_padding.cy * 2), row_height(frame_height > min_row_height ? frame_height : min_row_height), row_height_collapsed(row_height - 1), y(row_height_collapsed + row_spacing)
+	{}
 };
 
 #endif // !MONOTIDE_APP_FONTRENDERER_H

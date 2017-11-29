@@ -22,6 +22,8 @@ void FontDrawCache::precalc(std::vector<font::EnumFontInfo> & fonts,
 {
 	sizes.resize(fonts.size());
 
+	precalced = false;
+
 	HDC dc = GetDC(nullptr);
 
 	for (size_t i=0; i<fonts.size(); ++i)
@@ -46,6 +48,8 @@ void FontDrawCache::precalc(std::vector<font::EnumFontInfo> & fonts,
 	}
 
 	ReleaseDC(nullptr, dc);
+
+	precalced = true;
 }
 
 void FontDrawCache::get_size(RECT & rc, size_t index, HDC dc,
@@ -191,7 +195,43 @@ size_t FontRenderWorker::get_page_next_count() const
 
 size_t FontRenderWorker::get_page_prev_count() const
 {
-	return 10;
+	printf("last_index_rendered %u\n", last_index_rendered);
+
+	if ((size_t)-1 == last_index_rendered) return 0;
+	if (0 == last_index_rendered) return 0;
+
+	size_t font_count = 0;
+
+	if (draw_cache.precalced)
+	{
+		SIZE client_size;
+		lib::window::get_inner_size(hwnd, client_size);
+
+		int const cutoff_cy = client_size.cy - client_padding.cy;
+
+		long next_y = client_padding.cy;
+
+		for (size_t i=0; i<=last_index_rendered; ++i)
+		{
+			size_t const index = last_index_rendered-i;
+			printf("index %u\n", index);
+
+			int const font_height = draw_cache.sizes[index].cy;
+			Y_advance y_advance(font_height, frame_padding, min_row_height, row_spacing);
+			next_y += y_advance.y;
+
+			printf("next_y %ld\n", next_y);
+			if (next_y > cutoff_cy) break;
+
+			++font_count;
+		}
+
+		if (font_count > 0) --font_count;
+
+		printf("font_count %u\n", font_count);
+	}
+
+	return font_count;
 }
 
 void draw_frame(HDC dc, RECT & text_rc, SIZE const & frame_padding,
@@ -259,6 +299,18 @@ void FontRenderWorker::draw_fonts_ex(size_t first)
 	}
 }
 
+__attribute__((unused)) static int calc_y_advance(RECT text_rc, SIZE frame_padding, int min_row_height, int row_spacing)
+{
+	/// Calculate the y-advance .
+	int const text_height = text_rc.bottom - text_rc.top;
+	int const frame_height = text_height + frame_padding.cy * 2;
+	int const row_height = frame_height > min_row_height ?
+		frame_height : min_row_height;
+	int const row_height_collapsed = row_height - 1;
+	int const y = row_height_collapsed + row_spacing;
+	return y;
+}
+
 void FontRenderWorker::draw_fonts(size_t skip)
 {
 	rid.set_digits_from_max_index(fonts.size());
@@ -291,24 +343,18 @@ void FontRenderWorker::draw_fonts(size_t skip)
 
 		RECT text_rc = {client_padding.cx, y, 0, 0};
 		draw_cache.get_size(text_rc, i, offscreen.handle, text, text_len);
-
-		/// Calculate the y-advance .
-		int const text_height = text_rc.bottom - text_rc.top;
-		int const frame_height = text_height + frame_padding.cy * 2;
-		int const row_height = frame_height > min_row_height ?
-			frame_height : min_row_height;
-		int const row_height_collapsed = row_height - 1;
-		int const next_y = y + row_height_collapsed + row_spacing;
+		Y_advance y_advance(text_rc, frame_padding, min_row_height, row_spacing);
+		int const next_y = y + y_advance.y;
 
 		/// Is there room to draw this item or are we done ?
 		if (next_y > cutoff.cy) break;
 
 		/// Vertical centering offsets.
 		int const index_offset_y =
-			(row_height - rid.get_height()) / 2;
+			(y_advance.row_height - rid.get_height()) / 2;
 		int const text_offset_y =
-			text_height > min_row_height ? 0 :
-				(min_row_height - text_height) / 2;
+			y_advance.text_height > min_row_height ? 0 :
+				(min_row_height - y_advance.text_height) / 2;
 
 		RECT prefix_rc = {client_padding.cx, y + index_offset_y, 0, 0};
 		rid.draw(offscreen.handle, prefix_rc, i+1);
@@ -320,7 +366,7 @@ void FontRenderWorker::draw_fonts(size_t skip)
 		SetDCPenColor(offscreen.handle, RGB(100,100,100));
 
 		/// Line linking index to frame .
-		int const y_line = y + int(row_height / 2.0f);
+		int const y_line = y + int(y_advance.row_height / 2.0f);
 		MoveToEx(offscreen.handle, prefix_rc.right, y_line, nullptr);
 		LineTo(offscreen.handle, text_rc.left - frame_padding.cx, y_line);
 
