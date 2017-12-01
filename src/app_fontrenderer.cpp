@@ -115,10 +115,6 @@ void FontRenderWorker::task()
 		if (!msg || !*msg) msg = _T("rendering...");
 		else msg = _T("still rendering... ( stop scrolling! :)");
 
-#ifdef FR_DEBUG_SLOW_DRAW
-		PostMessage(hwnd, WM_FR_MESSAGE_UPDATE, 0, 0);
-#endif
-
 #ifndef NDEBUG
 		jobs_dropped = jobs.get_count() - 1;
 #endif
@@ -130,6 +126,12 @@ void FontRenderWorker::task()
 		bool const already_rendered = (index == last_index_rendered);
 
 		if (already_rendered) skip = needs_flip = true;
+		else
+		{
+#ifdef FR_DEBUG_SLOW_DRAW
+			PostMessage(hwnd, WM_FR_MESSAGE_UPDATE, 0, 0);
+#endif
+		}
 	}
 	// LeaveCriticalSection(&mutex);
 

@@ -35,8 +35,7 @@ static bool wm_create(HWND h, LPCREATESTRUCT /*cs*/)
 	vbar.parent = h;
 	font_renderer.hwnd = h;
 
-	SystemParametersInfo(SPI_GETWHEELSCROLLLINES,
-		0, &rows_per_scroll, 0);
+	SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &rows_per_scroll, 0);
 
 	HDC dc = GetDC(h);
 	font::list_fonts(fonts, ANSI_CHARSET, only_TTF, dc);
@@ -218,7 +217,7 @@ static LRESULT CALLBACK Callback(HWND h, UINT m, WPARAM wParam, LPARAM lParam)
 		default: return DefWindowProc(h, m, wParam, lParam);
 
 		case WM_CLOSE: DestroyWindow(h); return 0;
-		// case WM_ERASEBKGND: return 0;
+		case WM_ERASEBKGND: return 0;
 
 		HANDLE_MSG(h, WM_CREATE, wm_create);
 		HANDLE_MSG(h, WM_DESTROY, wm_destroy);
