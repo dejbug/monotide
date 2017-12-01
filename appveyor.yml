@@ -1,23 +1,32 @@
+version: "{build}"
 
-# We don't need tests right now.
+skip_tags: true
 test: off
+max_jobs: 1
 
-# The standard flow calls msbuild.exe. We need to
-# overwrite this default behavior here.
+install:
+  - cmd: SET MINGW_DIR=C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1
+  - cmd: SET PATH=%MINGW_DIR%\mingw32\bin;%PATH%
+
+before_build:
+  - cmd: mingw32-make --version | head -1
+  - cmd: g++ --version | head -1
+  - cmd: 7z --help | head -3
+
 build_script:
-  - cmd: call appveyor.bat
+  - cmd: mingw32-make -j1 --keep-going
+
+after_build:
+  - cmd: cd deploy
+  - cmd: COPY ..\README.md .
+  - cmd: COPY ..\LICENSE .
+  - cmd: 7z a ..\%APPVEYOR_PROJECT_NAME%-%APPVEYOR_BUILD_NUMBER%.7z .
 
 artifacts:
-  - path: build  # Push the entire "build" folder as a zip
-  - path: deploy\monotide-*.zip
+  - path: $(appveyor_project_name)-$(appveyor_build_number).7z
 
 deploy:
-  # Deploy to GitHub Releases
-  - provider: GitHub
-    auth_token:
-      secure: GlPci9QnLJxVkwdcLb6l1v0Std1gZw7kj+9Oyg/emy5H8Npnf8w6B9yXMH/DhNq2
-    draft: false
-    prerelease: true
+  - provider: Environment
+    name: GH
     on:
-      branch: master                # release from master branch only
-      appveyor_repo_tag: true      # deploy on tag push only
+      branch: master
