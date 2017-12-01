@@ -177,14 +177,13 @@ ATOM lib::window::create_class(LPCTSTR name, WNDPROC callback,
 	return RegisterClassEx(&wc);
 }
 
-HWND lib::window::create_frame(LPCTSTR name, HINSTANCE i)
+HWND lib::window::create_frame(HINSTANCE i, LPCTSTR clsname, DWORD style, DWORD stylex)
 {
 	return CreateWindowEx(
-		WS_EX_OVERLAPPEDWINDOW|WS_EX_ACCEPTFILES|
-			WS_EX_CONTEXTHELP|WS_EX_CONTROLPARENT,
-		name,
+		stylex,
+		clsname,
 		_T(""),
-		WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN,
+		style,
 		CW_USEDEFAULT, CW_USEDEFAULT,
 		CW_USEDEFAULT, CW_USEDEFAULT,
 		nullptr,
@@ -194,18 +193,22 @@ HWND lib::window::create_frame(LPCTSTR name, HINSTANCE i)
 	);
 }
 
-HWND lib::window::create_child(HWND parent, UINT id, LPCTSTR name,
-		HINSTANCE i)
+HWND lib::window::create_frame(LPCTSTR clsname, DWORD style, DWORD stylex)
+{
+	return lib::window::create_frame(nullptr, clsname, style, stylex);
+}
+
+HWND lib::window::create_child(LPCTSTR clsname, HWND parent, UINT id, DWORD style, DWORD stylex, HINSTANCE i)
 {
 	return CreateWindowEx(
-		WS_EX_OVERLAPPEDWINDOW,
-		name,
+		stylex,
+		clsname,
 		_T(""),
-		WS_CHILD|WS_CLIPSIBLINGS|WS_TABSTOP,
+		WS_CHILD|style,
 		CW_USEDEFAULT, CW_USEDEFAULT,
 		CW_USEDEFAULT, CW_USEDEFAULT,
 		parent,
-		(HMENU)id,
+		(HMENU) id,
 		i ? i : GetModuleHandle(nullptr),
 		nullptr
 	);

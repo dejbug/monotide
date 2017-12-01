@@ -41,8 +41,13 @@ ATOM create_class(WNDCLASSEX & wc);
 ATOM create_class(LPCTSTR clsname, WNDPROC);
 ATOM create_class(LPCTSTR clsname, WNDPROC, HINSTANCE);
 
-HWND create_frame(LPCTSTR clsname, HINSTANCE=nullptr);
-HWND create_child(HWND parent, UINT id, LPCTSTR clsname, HINSTANCE=nullptr);
+constexpr DWORD DEFAULT_FRAME_STYLE = WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN;
+constexpr DWORD DEFAULT_FRAME_STYLEX = WS_EX_OVERLAPPEDWINDOW|WS_EX_ACCEPTFILES|WS_EX_CONTEXTHELP|WS_EX_CONTROLPARENT;
+
+HWND create_frame(HINSTANCE i, LPCTSTR clsname, DWORD style=DEFAULT_FRAME_STYLE, DWORD stylex=DEFAULT_FRAME_STYLEX);
+HWND create_frame(LPCTSTR clsname, DWORD style=DEFAULT_FRAME_STYLE, DWORD stylex=DEFAULT_FRAME_STYLEX);
+
+HWND create_child(LPCTSTR clsname, HWND parent, UINT id, DWORD style=WS_CLIPSIBLINGS|WS_TABSTOP, DWORD stylex=0, HINSTANCE=nullptr);
 
 void set_size(HWND, int width, int height);
 void set_pos(HWND, int x, int y);

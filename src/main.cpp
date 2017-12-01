@@ -11,7 +11,15 @@ HWND hFontList = nullptr;
 
 bool wm_create(HWND h, LPCREATESTRUCT)
 {
-	hFontList = CreateWindow(WC_FONTLIST, _T("FontList"), WS_CHILD | WS_VISIBLE | WS_BORDER, 10, 10, 500, 600, h, (HMENU) IDC_FONTLIST, GetModuleHandle(nullptr), nullptr);
+	hFontList = window::create_child(WC_FONTLIST, h, IDC_FONTLIST, WS_BORDER);
+	if (!hFontList) return false;
+
+	window::set_size(hFontList, 500, 600);
+	window::set_pos(hFontList, 10, 10);
+
+	ShowWindow(hFontList, SW_SHOW);
+	UpdateWindow(hFontList);
+
 	SetFocus(hFontList);
 	return true;
 }
@@ -89,7 +97,7 @@ int WINAPI WinMain(HINSTANCE i, HINSTANCE, LPSTR, int iCmdShow)
 	LPCTSTR frame_cn = _T("monotide-MAINFRAME");
 	window::create_class(frame_cn, MainFrameProc, i);
 
-	HWND frame = window::create_frame(frame_cn, i);
+	HWND frame = window::create_frame(i, frame_cn);
 	SetWindowText(frame, _T("monotide-redux 2"));
 	window::set_size(frame, 600, 800);
 	window::center_to_parent(frame);

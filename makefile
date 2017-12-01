@@ -1,3 +1,5 @@
+PRECISE ?= 1
+TARGET ?= debug
 
 SHELL := cmd.exe
 
@@ -21,8 +23,6 @@ define LINK
 $(CXX) $(filter %.o %.a,$2) -o $1 $(CXXFLAGS) $(LDFLAGS)
 endef
 
-PRECISE := 0
-TARGET := debug
 SYMBOLS := WIN32_LEAN_AND_MEAN STRICT UNICODE _UNICODE
 WINLIBS := gdi32
 
@@ -51,8 +51,7 @@ all: build/monotide.exe
 
 build: ; $(call MKDIR,build)
 
-build/%.target : src/%.cpp | build
-	g++ -MF $@ -MM $< -MT $(subst .target,.o,$@)
+build/%.target : src/%.cpp | build ; g++ -MF $@ -MM $< -MT $(subst .target,.o,$@)
 
 ifneq ($(PRECISE),0)
 include $(patsubst src/%.cpp,build/%.target,$(wildcard src/*.cpp))
