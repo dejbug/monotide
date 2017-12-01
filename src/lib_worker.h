@@ -19,7 +19,7 @@ struct Worker
 	Worker(bool auto_start=false);
 
 	void start();
-	void stop();
+	virtual void stop();
 	bool wait(DWORD msec=INFINITE) const;
 
 	virtual void task() = 0;

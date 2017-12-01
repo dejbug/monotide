@@ -6,6 +6,14 @@
 #include "common.h"
 // #include "macros.h"
 
+#ifndef NDEBUG
+// #define _APP_FONTRENDERER_LOG_JOBS
+// #define _APP_FONTRENDERER_LOG_RENDER
+// #define _APP_FONTRENDERER_LOG_PAGES
+// #define _APP_FONTRENDERER_LOG_CACHE
+// #define _APP_FONTRENDERER_DEBUG_SLOW_DRAW	 	500
+// #define _APP_FONTRENDERER_DEBUG_TICK_DELAY		500
+#endif
 
 void FontDrawCache::ensure_capacity(std::vector<font::EnumFontInfo> & fonts)
 {
@@ -59,19 +67,30 @@ void FontDrawCache::get_size(RECT & rc, size_t index, HDC dc,
 	{
 		snippets::calc_text_rect_2(rc, dc, text, text_len);
 		sizes[index] = SIZE{rc.right - rc.left, rc.bottom - rc.top};
-		// printf("cached\n");
+#ifdef _APP_FONTRENDERER_LOG_CACHE
+		_tprintf(_T("cached\n"));
+#endif
 	}
 	else
 	{
 		rc.right = rc.left + sizes[index].cx;
 		rc.bottom = rc.top + sizes[index].cy;
-		// printf("cache hit\n");
+#ifdef _APP_FONTRENDERER_LOG_CACHE
+		_tprintf(_T("cache hit\n"));
+#endif
 	}
 }
 
 FontRenderWorker::Job::Job(size_t index)
 		: index(index)
 {
+}
+
+FontRenderWorker::Job::~Job()
+{
+#ifdef _APP_FONTRENDERER_LOG_JOBS
+	_tprintf(_T("~Job #%d\n"), index);
+#endif
 }
 
 FontRenderWorker::FontRenderWorker(
@@ -91,21 +110,29 @@ FontRenderWorker::~FontRenderWorker()
 {
 }
 
+void FontRenderWorker::stop()
+{
+	worker::Worker::stop();
+	jobs.notify();
+}
+
 void FontRenderWorker::task()
 {
+#ifdef _APP_FONTRENDERER_LOG_RENDER
 	_tprintf(_T("\n"));
+#endif
 
 	static bool needs_flip = true;
 	bool skip = true;
 
 	size_t index = 0;
 
-#ifndef NDEBUG
+#ifdef _APP_FONTRENDERER_LOG_JOBS
 	size_t jobs_dropped = 0;
 #endif
 
-#ifdef FR_DEBUG_TICK_DELAY
-	printf(" [ font renderer %08x ] tick\n", (size_t) this);
+#ifdef _APP_FONTRENDERER_DEBUG_TICK_DELAY
+	_tprintf(_T(" [ font renderer %08x ] tick\n"), (size_t) this);
 #endif
 
 	// EnterCriticalSection(&mutex);
@@ -113,9 +140,9 @@ void FontRenderWorker::task()
 	if (job)
 	{
 		if (!msg || !*msg) msg = _T("rendering...");
-		else msg = _T("still rendering... ( stop scrolling! :)");
+		else msg = _T("rendering... ( stop scrolling! :)");
 
-#ifndef NDEBUG
+#ifdef _APP_FONTRENDERER_LOG_JOBS
 		jobs_dropped = jobs.get_count() - 1;
 #endif
 
@@ -128,44 +155,54 @@ void FontRenderWorker::task()
 		if (already_rendered) skip = needs_flip = true;
 		else
 		{
-#ifdef FR_DEBUG_SLOW_DRAW
+#ifdef _APP_FONTRENDERER_DEBUG_SLOW_DRAW
 			PostMessage(hwnd, WM_FR_MESSAGE_UPDATE, 0, 0);
 #endif
 		}
 	}
 	// LeaveCriticalSection(&mutex);
 
+#ifdef _APP_FONTRENDERER_LOG_RENDER
 	_tprintf(_T("fr == index %d skip %s needs_flip %s\n"), index, skip ? _T("Y") : _T("N"), needs_flip ? _T("Y") : _T("N"));
+#endif
 
 	if (skip)
 	{
+#ifdef _APP_FONTRENDERER_LOG_RENDER
 		_tprintf(_T("fr -- skipping"));
+#endif
 		msg = _T("");
 		if (needs_flip)
 		{
+#ifdef _APP_FONTRENDERER_LOG_RENDER
 			_tprintf(_T(" & flipping"));
+#endif
 			offscreen.flip();
 			needs_flip = false;
 		}
+#ifdef _APP_FONTRENDERER_LOG_RENDER
 		_tprintf(_T("\n"));
+#endif
 
-#ifdef FR_DEBUG_TICK_DELAY
-		jobs.wait(FR_DEBUG_TICK_DELAY);
+#ifdef _APP_FONTRENDERER_DEBUG_TICK_DELAY
+		jobs.wait(_APP_FONTRENDERER_DEBUG_TICK_DELAY);
 #else
 		jobs.wait(INFINITE);
 #endif
 		return;
 	}
 
-#ifndef NDEBUG
+#ifdef _APP_FONTRENDERER_LOG_JOBS
 	_tprintf(_T(" [ jobs dropped ] %d\n"), jobs_dropped);
 #endif
 
-#ifdef FR_DEBUG_SLOW_DRAW
-	Sleep(FR_DEBUG_SLOW_DRAW);
+#ifdef _APP_FONTRENDERER_DEBUG_SLOW_DRAW
+	Sleep(_APP_FONTRENDERER_DEBUG_SLOW_DRAW);
 #endif
 
+#ifdef _APP_FONTRENDERER_LOG_RENDER
 	_tprintf(_T("fr -- drawing\n"));
+#endif
 	offscreen.clear(COLOR_MENU);
 	draw_fonts(index);
 	// draw_fonts_ex(index);
@@ -197,7 +234,9 @@ size_t FontRenderWorker::get_page_next_count() const
 
 size_t FontRenderWorker::get_page_prev_count() const
 {
-	printf("last_index_rendered %u\n", last_index_rendered);
+#ifdef _APP_FONTRENDERER_LOG_PAGES
+	_tprintf(_T("last_index_rendered %u\n"), last_index_rendered);
+#endif
 
 	if ((size_t)-1 == last_index_rendered) return 0;
 	if (0 == last_index_rendered) return 0;
@@ -216,21 +255,24 @@ size_t FontRenderWorker::get_page_prev_count() const
 		for (size_t i=0; i<=last_index_rendered; ++i)
 		{
 			size_t const index = last_index_rendered-i;
-			printf("index %u\n", index);
-
+#ifdef _APP_FONTRENDERER_LOG_PAGES
+			_tprintf(_T("index %u\n"), index);
+#endif
 			int const font_height = draw_cache.sizes[index].cy;
 			Y_advance y_advance(font_height, frame_padding, min_row_height, row_spacing);
 			next_y += y_advance.y;
-
-			printf("next_y %ld\n", next_y);
+#ifdef _APP_FONTRENDERER_LOG_PAGES
+			_tprintf(_T("next_y %ld\n"), next_y);
+#endif
 			if (next_y > cutoff_cy) break;
 
 			++font_count;
 		}
 
 		if (font_count > 0) --font_count;
-
-		printf("font_count %u\n", font_count);
+#ifdef _APP_FONTRENDERER_LOG_PAGES
+		_tprintf(_T("font_count %u\n"), font_count);
+#endif
 	}
 
 	return font_count;
@@ -274,7 +316,9 @@ void FontRenderWorker::draw_fonts_ex(size_t first)
 	{
 		if (!jobs.is_empty())
 		{
-			printf("jobs added while rendering last job\n");
+#ifdef _APP_FONTRENDERER_LOG_JOBS
+			_tprintf(_T("jobs added while rendering last job\n"));
+#endif
 			break;
 		}
 

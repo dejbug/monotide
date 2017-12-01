@@ -1,6 +1,11 @@
+#include <tchar.h>
 #include "lib_worker.h"
 #ifndef NDEBUG
 #include <stdio.h>
+#endif
+
+#ifndef NDEBUG
+// #define _LIB_WORKER_LOG_ENTRY
 #endif
 
 namespace lib {
@@ -51,8 +56,8 @@ bool Worker::wait(DWORD msec) const
 
 DWORD Worker::run()
 {
-#ifndef NDEBUG
-	printf(" [ Worker %08x ] enter\n", (size_t) this);
+#ifdef _LIB_WORKER_LOG_ENTRY
+	_tprintf(_T(" [ Worker %08x ] enter\n"), (size_t) this);
 #endif
 
 	while (running)
@@ -60,8 +65,8 @@ DWORD Worker::run()
 		task();
 	}
 
-#ifndef NDEBUG
-	printf(" [ Worker %08x ] leave\n", (size_t) this);
+#ifdef _LIB_WORKER_LOG_ENTRY
+	_tprintf(_T(" [ Worker %08x ] leave\n"), (size_t) this);
 #endif
 
 	return 0;

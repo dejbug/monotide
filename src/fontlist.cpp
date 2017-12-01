@@ -10,6 +10,11 @@
 #include "lib_font.h"
 #include "app_fontrenderer.h"
 
+#ifndef NDEBUG
+// #define _FONTLIST_LOG_FONTS_ENUM
+// #define _FONTLIST_WAIT_AT_EXIT					1000
+// #define _APP_FONTRENDERER_DEBUG_SLOW_DRAW		500
+#endif
 
 #define HANDLE_WM_FR_MESSAGE_UPDATE(h,w,l,fn) ((fn)(h),(LRESULT) 0)
 
@@ -19,10 +24,10 @@ struct PrivateData
 	LONG style = 0;
 };
 
-bool const draw_while_thumb_tracking = false;
-bool const only_TTF = false;
-bool const precalc = true;
-LONG const preferredFontHeight = 46;
+constexpr bool DRAW_WHILE_THUMB_TRACKING = false;
+constexpr bool ONLY_TTF = false;
+constexpr bool PRECALC_FONT_HEIGHTS = true;
+constexpr LONG PREFERRED_FONT_HEIGHT = 0;
 
 static std::vector<font::EnumFontInfo> fonts;
 static UINT rows_per_scroll = 1;
@@ -32,25 +37,27 @@ static FontRenderWorker font_renderer(fonts);
 
 static bool wm_create(HWND h, LPCREATESTRUCT /*cs*/)
 {
+	PostMessage(h, WM_FR_MESSAGE_UPDATE, 0, 0);
+
 	vbar.parent = h;
 	font_renderer.hwnd = h;
 
 	SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &rows_per_scroll, 0);
 
 	HDC dc = GetDC(h);
-	font::list_fonts(fonts, ANSI_CHARSET, only_TTF, dc);
+	font::list_fonts(fonts, ANSI_CHARSET, ONLY_TTF, dc);
 	font::sort_fonts(fonts);
 	ReleaseDC(h, dc);
 
-	if (preferredFontHeight && !precalc)
-		font_renderer.preferredFontHeight = preferredFontHeight;
+	if (PREFERRED_FONT_HEIGHT && !PRECALC_FONT_HEIGHTS)
+		font_renderer.preferredFontHeight = PREFERRED_FONT_HEIGHT;
 
-	if (precalc)
-		font_renderer.draw_cache.precalc(fonts, preferredFontHeight);
+	if (PRECALC_FONT_HEIGHTS)
+		font_renderer.draw_cache.precalc(fonts, PREFERRED_FONT_HEIGHT);
 	else
 		font_renderer.draw_cache.ensure_capacity(fonts);
 
-#ifndef NDEBUG
+#ifdef _FONTLIST_LOG_FONTS_ENUM
 	printf(" %d fonts found\n", fonts.size());
 #endif
 
@@ -131,7 +138,7 @@ static void wm_vscroll(HWND h, HWND /*bar*/, UINT nScrollCode, int nPos)
 
 		case SB_THUMBTRACK:
 			vbar.index = nPos;
-			if (draw_while_thumb_tracking)
+			if (DRAW_WHILE_THUMB_TRACKING)
 			{
 				vbar.update();
 				font_renderer.queue(vbar.index);
@@ -147,7 +154,7 @@ static void wm_vscroll(HWND h, HWND /*bar*/, UINT nScrollCode, int nPos)
 
 static void wm_nclbuttondown(HWND h, BOOL dblclk, int x, int y, UINT nHittest)
 {
-	if (!draw_while_thumb_tracking && HTVSCROLL == nHittest)
+	if (!DRAW_WHILE_THUMB_TRACKING && HTVSCROLL == nHittest)
 	{
 		PostMessage(h, WM_FR_MESSAGE_UPDATE, 0, 0);
 	}
@@ -172,8 +179,8 @@ static void wm_size(HWND h, UINT /*fwSizeType*/ , int /*cx*/, int /*cy*/)
 static void wm_destroy(HWND)
 {
 	font_renderer.stop();
-#ifdef FR_WAIT_AT_EXIT
-	font_renderer.wait(FR_WAIT_AT_EXIT);
+#ifdef _FONTLIST_WAIT_AT_EXIT
+	font_renderer.wait(_FONTLIST_WAIT_AT_EXIT);
 #endif
 	PostQuitMessage(0);
 }
@@ -203,7 +210,7 @@ static void wm_fr_message_update(HWND h)
 	GetClientRect(h, &client_rect);
 	HDC dc = GetDC(h);
 	FillRect(dc, &client_rect, (HBRUSH)(COLOR_MENU+1));
-#ifdef DEBUG_FR_DELAY
+#ifdef _APP_FONTRENDERER_DEBUG_SLOW_DRAW
 	lib::window::quick_draw(dc, 8, 8,
 		font_renderer.get_msg(), -1, 42, RGB(100,100,100));
 #endif

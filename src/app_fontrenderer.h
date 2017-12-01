@@ -57,13 +57,15 @@ struct FontRenderWorker
 	size_t get_page_next_count() const;
 	size_t get_page_prev_count() const;
 
+	void stop();
+
 private:
 	struct Job
 	{
 		size_t index;
 
 		Job(size_t);
-		virtual ~Job() { printf("~Job #%d\n", index); }
+		virtual ~Job();
 	};
 
 	EventQueue<Job> jobs;
